@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="700.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.starlore.starlore.HelloController">
+   <children>
+      <VBox alignment="CENTER" layoutX="24.8" layoutY="93.0" prefHeight="390.0" prefWidth="950.0" spacing="18.0" AnchorPane.leftAnchor="25.0" AnchorPane.rightAnchor="25.0" AnchorPane.topAnchor="120.0">
+         <children>
+            <Label style="-fx-font-size: 42; -fx-font-weight: bold;" text="StarLore" />
+            <Label style="-fx-font-size: 24;" text="Constellation Chronicles" />
+            <Label style="-fx-font-size: 18;" text="The Heaven Awaits" />
+            <TextField fx:id="nameField" maxWidth="320.0" onAction="#checkPlayer" promptText="Enter your Astronomer Name" />
+            <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="12.0">
+               <children>
+                  <Circle fill="DODGERBLUE" radius="6.0" stroke="BLACK" strokeType="INSIDE" />
+                  <Circle fill="#d9ac09" radius="6.0" stroke="BLACK" strokeType="INSIDE" />
+                  <Circle fill="#c13636" radius="6.0" stroke="BLACK" strokeType="INSIDE" />
+                  <Circle fill="#0e9c15" radius="6.0" stroke="BLACK" strokeType="INSIDE" />
+                  <Circle fill="#720a8efc" radius="6.0" stroke="BLACK" strokeType="INSIDE" />
+               </children>
+            </HBox>
+         </children>
+      </VBox>
+   </children>
+</AnchorPane>
