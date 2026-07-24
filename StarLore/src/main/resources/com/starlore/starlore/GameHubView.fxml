@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="700.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.starlore.starlore.GameHubController">
+   <children>
+      <BorderPane prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: linear-gradient(to bottom, #050816, #0a0a2e, #000000);">
+         <top>
+            <VBox prefHeight="200.0" prefWidth="100.0" style="-fx-padding: 18 28 12 28; -fx-background-color: transparent;" BorderPane.alignment="CENTER">
+               <children>
+                  <HBox alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="200.0">
+                     <children>
+                        <Label style="-fx-font-size: 26; -fx-font-weight: bold; -fx-text-fill: white; -fx-letter-spacing: 3;" text="ASTRAL HUB" />
+                        <Region prefHeight="200.0" prefWidth="200.0" HBox.hgrow="ALWAYS" />
+                        <HBox alignment="CENTER_RIGHT" prefHeight="100.0" prefWidth="200.0" spacing="18.0">
+                           <children>
+                              <Button fx:id="profileBtn" mnemonicParsing="false" onAction="#openProfile" style="-fx-background-color: transparent; -fx-font-size: 22; -fx-cursor: hand;" text="👤" />
+                              <Button fx:id="leaderboardBtn" mnemonicParsing="false" onAction="#openLeaderboard" style="-fx-background-color: transparent; -fx-font-size: 22; -fx-cursor: hand;" text="🏆" />
+                              <Button fx:id="signOutBtn" mnemonicParsing="false" onAction="#signOut" style="-fx-background-color: transparent; -fx-font-size: 22; -fx-cursor: hand;" text="🚪" />
+                           </children>
+                        </HBox>
+                     </children>
+                  </HBox>
+                  <HBox alignment="CENTER_LEFT" prefHeight="24.0" prefWidth="900.0" spacing="24.0" style="-fx-padding: 6 0 0 0;">
+                     <children>
+                        <Label fx:id="rankLabel" style="-fx-font-size: 15; -fx-text-fill: #afc9ff;" text="⭐ Stargazer" />
+                        <Label fx:id="starDustLabel" style="-fx-font-size: 15; -fx-text-fill: #f0d060;" text="🌟 Star Dust: 0" />
+                     </children>
+                  </HBox>
+                  <Region maxHeight="1.0" prefHeight="1.0" prefWidth="200.0" style="-fx-background-color: #2a2a5a;" VBox.vgrow="NEVER" />
+               </children>
+            </VBox>
+         </top>
+         <center>
+            <GridPane alignment="CENTER" hgap="24.0" style="-fx-padding: 30;" vgap="24.0" BorderPane.alignment="CENTER">
+              <columnConstraints>
+                <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" percentWidth="50.0" prefWidth="100.0" />
+                <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" percentWidth="50.0" prefWidth="100.0" />
+              </columnConstraints>
+              <rowConstraints>
+                <RowConstraints minHeight="10.0" percentHeight="50.0" prefHeight="30.0" vgrow="ALWAYS" />
+                <RowConstraints minHeight="10.0" percentHeight="50.0" prefHeight="30.0" vgrow="ALWAYS" />
+                
+              </rowConstraints>
+               <children>
+                  <StackPane fx:id="storyCard" onDragDetected="#launchStoryMode" prefHeight="150.0" prefWidth="200.0" style="-fx-background-color: #4a0080; -fx-background-radius: 18; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, #7a00c0, 18, 0, 0, 0);" GridPane.columnIndex="1">
+                     <children>
+                        <VBox alignment="CENTER_LEFT" prefHeight="200.0" prefWidth="100.0" spacing="10.0" style="-fx-padding: 28;">
+                           <children>
+                              <Label style="-fx-font-size: 36;" text="📖" />
+                              <Label style="-fx-font-size: 22; -fx-font-weight: bold;                                                   -fx-text-fill: white;" text="Story Mode" />
+                              <Label style="-fx-font-size: 14; -fx-text-fill: #d4aaff;" text="Explore Ancient Myths" />
+                           </children>
+                        </VBox>
+                     </children>
+                  </StackPane>
+                  <StackPane fx:id="duelCard" onDragDetected="#launchDuelMode" prefHeight="150.0" prefWidth="200.0" style="-fx-background-color: #0a1a6e; -fx-background-radius: 18; -fx-effect: dropshadow(gaussian, #1a3aae, 18, 0, 0, 0);-fx-cursor: hand;">
+                     <children>
+                        <VBox alignment="CENTER_LEFT" prefHeight="200.0" prefWidth="100.0" spacing="10.0"  style="-fx-padding: 28;">
+                           <children>
+                              <Label text="⚔️" style="-fx-font-size: 36;"/>
+                              <Label text="Constellation Duel"
+                                     style="-fx-font-size: 22; -fx-font-weight: bold;
+                                                  -fx-text-fill: white;"/>
+                              <Label text="Battle Other Stargazers"
+                                     style="-fx-font-size: 14; -fx-text-fill: #aac4ff;"/>
+                           </children>
+                        </VBox>
+                     </children>
+                  </StackPane>
+                  <StackPane fx:id="quizCard" onDragDetected="#launchMythQuiz" prefHeight="150.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="1" style="-fx-background-color: #0a4a4a;
+                                      -fx-background-radius: 18;
+                                      -fx-cursor: hand;
+                                      -fx-effect: dropshadow(gaussian, #0a8a8a, 18, 0, 0, 0);">
+                     <children>
+                        <VBox alignment="CENTER_LEFT" prefHeight="200.0" prefWidth="100.0" spacing="10.0"  style="-fx-padding: 28;">
+                           <children>
+                              <Label text="❓" style="-fx-font-size: 36;"/>
+                              <Label text="Myth Quiz"
+                                     style="-fx-font-size: 22; -fx-font-weight: bold;
+                                                  -fx-text-fill: white;"/>
+                              <Label text="Test Your Knowledge"
+                                     style="-fx-font-size: 14; -fx-text-fill: #aaffee;"/>
+                           </children>
+                        </VBox>
+                     </children>
+                  </StackPane>
+                  <StackPane fx:id="arcadeCard" onDragDetected="#launchArcade" prefHeight="150.0" prefWidth="200.0" GridPane.rowIndex="1"  style="-fx-background-color: #6e0a0a;
+                                      -fx-background-radius: 18;
+                                      -fx-cursor: hand;
+                                      -fx-effect: dropshadow(gaussian, #ae1a1a, 18, 0, 0, 0);">
+                     <children>
+                        <VBox alignment="BOTTOM_LEFT" prefHeight="200.0" prefWidth="100.0" spacing="10.0"  style="-fx-padding: 28;">
+                           <children>
+                              <Label text="🌠" style="-fx-font-size: 36;"/>
+                              <Label text="Shooting Star Arcade"
+                                     style="-fx-font-size: 22; -fx-font-weight: bold;
+                                                  -fx-text-fill: white;"/>
+                              <Label text="Catch Falling Stars"
+                                     style="-fx-font-size: 14; -fx-text-fill: #ffaaaa;"/>
+                           </children>
+                        </VBox>
+                     </children>
+                  </StackPane>
+               </children>
+            </GridPane>
+         </center>
+      </BorderPane>
+      <StackPane fx:id="transitionOverlay" prefHeight="150.0" prefWidth="200.0" style="-fx-background-color: transparent;" visible="false">
+         <children>
+            <Canvas fx:id="transitionCanvas" height="700.0" width="1000.0" />
+            <Label fx:id="transitionLabel" style="-fx-font-size: 28; -fx-text-fill: white; -fx-font-weight: bold;" text="" visible="false" />
+         </children>
+      </StackPane>
+   </children>
+</StackPane>

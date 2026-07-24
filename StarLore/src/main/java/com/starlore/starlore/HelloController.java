@@ -4,11 +4,16 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-
+import javafx.animation.FadeTransition;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
+import javafx.util.Duration;
 public class HelloController {
     @FXML
     private TextField nameField;
-
+    private PlayerDAO playerDAO = new PlayerDAO();
     @FXML
     private Label welcomeLabel;
 
@@ -25,21 +30,29 @@ public class HelloController {
 
         // Later we'll check if player exists
 
-        welcomeLabel.setText(
-                "✨ Welcome, " + name +
-                        "\n\nThe heavens recognize a new astronomer."
-        );
+        try {
+            Player player = playerDAO.checkOrCreatePlayer(name);
 
-        welcomeLabel.setVisible(true);
+            // Load welcome screen
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("WelcomeView.fxml"));
+            Parent root = loader.load();
 
-        beginButton.setVisible(true);
+            // Pass player data to WelcomeController
+            WelcomeController controller = loader.getController();
+            controller.setPlayer(player);
 
-    }
+            root.setOpacity(0);
+            Stage stage = (Stage) nameField.getScene().getWindow();
+            stage.setScene(new Scene(root));
 
-    @FXML
-    private void beginJourney() {
+            // Fade in welcome screen
+            FadeTransition fadeIn = new FadeTransition(Duration.seconds(1.5), root);
+            fadeIn.setFromValue(0);
+            fadeIn.setToValue(1);
+            fadeIn.play();
 
-        System.out.println("Go to Game Mode Page");
-
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

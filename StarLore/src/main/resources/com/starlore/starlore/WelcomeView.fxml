@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.VBox?>
+
+
+<AnchorPane prefHeight="1000.0" prefWidth="700.0" style="-fx-background-color: linear-gradient(#050816, #000000);" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.starlore.starlore.WelcomeController">
+   <children>
+      <VBox alignment="CENTER" layoutX="434.0" layoutY="190.0" prefHeight="200.0" prefWidth="100.0" spacing="24.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="200.0">
+         <children>
+            <Label fx:id="welcomeLabel" alignment="CENTER" style="-fx-font-size: 32; -fx-text-fill: white; -fx-font-weight: bold;" wrapText="true" />
+            <Label fx:id="subLabel" alignment="CENTER" style="-fx-font-size: 18; -fx-text-fill: #afc9ff;" wrapText="true" />
+            <Button fx:id="journeyButton" mnemonicParsing="false" onAction="#startJourney" style="-fx-background-color: #1a1a4e; -fx-text-fill: white; -fx-font-size: 16; -fx-padding: 12 32;" text="Begin Journey" />
+         </children>
+      </VBox>
+   </children>
+</AnchorPane>
