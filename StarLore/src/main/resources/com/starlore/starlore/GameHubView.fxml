@@ -64,50 +64,35 @@
                         </VBox>
                      </children>
                   </StackPane>
-                  <StackPane fx:id="duelCard" onDragDetected="#launchDuelMode" prefHeight="150.0" prefWidth="200.0" style="-fx-background-color: #0a1a6e; -fx-background-radius: 18; -fx-effect: dropshadow(gaussian, #1a3aae, 18, 0, 0, 0);-fx-cursor: hand;">
+                  <StackPane fx:id="duelCard" onDragDetected="#launchDuelMode" onMouseClicked="#launchDuelMode" prefHeight="150.0" prefWidth="200.0" style="-fx-background-color: #0a1a6e; -fx-background-radius: 18; -fx-effect: dropshadow(gaussian, #1a3aae, 18, 0, 0, 0);-fx-cursor: hand;">
                      <children>
-                        <VBox alignment="CENTER_LEFT" prefHeight="200.0" prefWidth="100.0" spacing="10.0"  style="-fx-padding: 28;">
+                        <VBox alignment="CENTER_LEFT" prefHeight="200.0" prefWidth="100.0" spacing="10.0" style="-fx-padding: 28;">
                            <children>
-                              <Label text="⚔️" style="-fx-font-size: 36;"/>
-                              <Label text="Constellation Duel"
-                                     style="-fx-font-size: 22; -fx-font-weight: bold;
-                                                  -fx-text-fill: white;"/>
-                              <Label text="Battle Other Stargazers"
-                                     style="-fx-font-size: 14; -fx-text-fill: #aac4ff;"/>
+                              <Label style="-fx-font-size: 36;" text="⚔️" />
+                              <Label style="-fx-font-size: 22; -fx-font-weight: bold;                                                   -fx-text-fill: white;" text="Constellation Duel" />
+                              <Label style="-fx-font-size: 14; -fx-text-fill: #aac4ff;" text="Battle Other Stargazers" />
                            </children>
                         </VBox>
                      </children>
                   </StackPane>
-                  <StackPane fx:id="quizCard" onDragDetected="#launchMythQuiz" prefHeight="150.0" prefWidth="200.0" GridPane.columnIndex="1" GridPane.rowIndex="1" style="-fx-background-color: #0a4a4a;
-                                      -fx-background-radius: 18;
-                                      -fx-cursor: hand;
-                                      -fx-effect: dropshadow(gaussian, #0a8a8a, 18, 0, 0, 0);">
+                  <StackPane fx:id="quizCard" onDragDetected="#launchMythQuiz" prefHeight="150.0" prefWidth="200.0" style="-fx-background-color: #0a4a4a;                                       -fx-background-radius: 18;                                       -fx-cursor: hand;                                       -fx-effect: dropshadow(gaussian, #0a8a8a, 18, 0, 0, 0);" GridPane.columnIndex="1" GridPane.rowIndex="1">
                      <children>
-                        <VBox alignment="CENTER_LEFT" prefHeight="200.0" prefWidth="100.0" spacing="10.0"  style="-fx-padding: 28;">
+                        <VBox alignment="CENTER_LEFT" prefHeight="200.0" prefWidth="100.0" spacing="10.0" style="-fx-padding: 28;">
                            <children>
-                              <Label text="❓" style="-fx-font-size: 36;"/>
-                              <Label text="Myth Quiz"
-                                     style="-fx-font-size: 22; -fx-font-weight: bold;
-                                                  -fx-text-fill: white;"/>
-                              <Label text="Test Your Knowledge"
-                                     style="-fx-font-size: 14; -fx-text-fill: #aaffee;"/>
+                              <Label style="-fx-font-size: 36;" text="❓" />
+                              <Label style="-fx-font-size: 22; -fx-font-weight: bold;                                                   -fx-text-fill: white;" text="Myth Quiz" />
+                              <Label style="-fx-font-size: 14; -fx-text-fill: #aaffee;" text="Test Your Knowledge" />
                            </children>
                         </VBox>
                      </children>
                   </StackPane>
-                  <StackPane fx:id="arcadeCard" onDragDetected="#launchArcade" prefHeight="150.0" prefWidth="200.0" GridPane.rowIndex="1"  style="-fx-background-color: #6e0a0a;
-                                      -fx-background-radius: 18;
-                                      -fx-cursor: hand;
-                                      -fx-effect: dropshadow(gaussian, #ae1a1a, 18, 0, 0, 0);">
+                  <StackPane fx:id="arcadeCard" onDragDetected="#launchArcade" prefHeight="150.0" prefWidth="200.0" style="-fx-background-color: #6e0a0a;                                       -fx-background-radius: 18;                                       -fx-cursor: hand;                                       -fx-effect: dropshadow(gaussian, #ae1a1a, 18, 0, 0, 0);" GridPane.rowIndex="1">
                      <children>
-                        <VBox alignment="BOTTOM_LEFT" prefHeight="200.0" prefWidth="100.0" spacing="10.0"  style="-fx-padding: 28;">
+                        <VBox alignment="BOTTOM_LEFT" prefHeight="200.0" prefWidth="100.0" spacing="10.0" style="-fx-padding: 28;">
                            <children>
-                              <Label text="🌠" style="-fx-font-size: 36;"/>
-                              <Label text="Shooting Star Arcade"
-                                     style="-fx-font-size: 22; -fx-font-weight: bold;
-                                                  -fx-text-fill: white;"/>
-                              <Label text="Catch Falling Stars"
-                                     style="-fx-font-size: 14; -fx-text-fill: #ffaaaa;"/>
+                              <Label style="-fx-font-size: 36;" text="🌠" />
+                              <Label style="-fx-font-size: 22; -fx-font-weight: bold;                                                   -fx-text-fill: white;" text="Shooting Star Arcade" />
+                              <Label style="-fx-font-size: 14; -fx-text-fill: #ffaaaa;" text="Catch Falling Stars" />
                            </children>
                         </VBox>
                      </children>

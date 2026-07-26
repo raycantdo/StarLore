@@ -1,18 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.Label?>
+<?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.shape.Circle?>
-<?import javafx.scene.text.Font?>
 
-
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="700.0" prefWidth="1000.0" style="-fx-background-color: linear-gradient(#050816,#000000);" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.starlore.starlore.SplashController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="700.0" prefWidth="950.0" style="-fx-background-color: linear-gradient(#050816,#000000);" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.starlore.starlore.SplashController">
    <children>
-      <Label fx:id="titleLabel" alignment="CENTER" layoutX="174.0" layoutY="303.0" prefHeight="94.0" prefWidth="274.0" style="-fx-font-weight: bold;" text="StarLore" textFill="WHITE" AnchorPane.bottomAnchor="303.4" AnchorPane.leftAnchor="174.0" AnchorPane.rightAnchor="250.79999999999995" AnchorPane.topAnchor="303.0">
-         <font>
-            <Font size="64.0" />
-         </font>
-      </Label>
       <Circle fill="#afc9ff" layoutX="100.0" layoutY="131.0" radius="2.0" stroke="BLACK" strokeType="INSIDE" />
       <Circle fill="#afc9ff" layoutX="185.0" layoutY="408.0" radius="2.0" stroke="BLACK" strokeType="INSIDE" />
       <Circle fill="#afc9ff" layoutX="598.0" layoutY="382.0" radius="2.0" stroke="BLACK" strokeType="INSIDE" />
@@ -43,5 +36,6 @@
       <Circle fill="#afc9ff" layoutX="533.0" layoutY="592.0" radius="2.0" stroke="BLACK" strokeType="INSIDE" />
       <Circle fill="#afc9ff" layoutX="508.0" layoutY="508.0" radius="2.0" stroke="BLACK" strokeType="INSIDE" />
       <Circle fill="#afc9ff" layoutX="150.0" layoutY="466.0" radius="2.0" stroke="BLACK" strokeType="INSIDE" />
+      <Canvas fx:id="splashCanvas" height="700.0" width="950.0" AnchorPane.leftAnchor="0.0" AnchorPane.topAnchor="0.0" />
    </children>
 </AnchorPane>

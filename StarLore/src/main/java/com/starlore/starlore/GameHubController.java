@@ -112,11 +112,31 @@ public class GameHubController {
             //playBookTransition(() -> navigateTo("StoryMode.fxml"));
         }
 
-        @FXML
-        private void launchDuelMode() {
-            transitionOverlay.setVisible(true);
-            //playSparkTransition(() -> navigateTo("DuelMode.fxml"));
-        }
+    @FXML
+    private void launchDuelMode() {
+        transitionOverlay.setVisible(true);
+        playSparkTransition(() -> {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("DuelMode.fxml"));
+                Parent root = loader.load();
+
+                DuelController controller = loader.getController();
+                controller.setPlayer(currentPlayer);
+
+                root.setOpacity(0);
+                Stage stage = (Stage) storyCard.getScene().getWindow();
+                stage.setScene(new Scene(root));
+
+                FadeTransition fadeIn = new FadeTransition(Duration.seconds(1), root);
+                fadeIn.setFromValue(0);
+                fadeIn.setToValue(1);
+                fadeIn.play();
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
 
         @FXML
         private void launchMythQuiz() {
