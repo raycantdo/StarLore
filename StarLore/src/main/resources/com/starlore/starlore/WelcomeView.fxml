@@ -5,14 +5,13 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.VBox?>
 
-
-<AnchorPane prefHeight="1000.0" prefWidth="700.0" style="-fx-background-color: linear-gradient(#050816, #000000);" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.starlore.starlore.WelcomeController">
+<AnchorPane prefHeight="700.0" prefWidth="950.0" style="-fx-background-color: linear-gradient(#050816, #000000);" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.starlore.starlore.WelcomeController">
    <children>
-      <VBox alignment="CENTER" layoutX="434.0" layoutY="190.0" prefHeight="200.0" prefWidth="100.0" spacing="24.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="200.0">
+      <VBox alignment="CENTER" layoutX="434.0" layoutY="156.8" prefHeight="409.0" prefWidth="950.0" spacing="24.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="157.0">
          <children>
-            <Label fx:id="welcomeLabel" alignment="CENTER" style="-fx-font-size: 32; -fx-text-fill: white; -fx-font-weight: bold;" wrapText="true" />
-            <Label fx:id="subLabel" alignment="CENTER" style="-fx-font-size: 18; -fx-text-fill: #afc9ff;" wrapText="true" />
-            <Button fx:id="journeyButton" mnemonicParsing="false" onAction="#startJourney" style="-fx-background-color: #1a1a4e; -fx-text-fill: white; -fx-font-size: 16; -fx-padding: 12 32;" text="Begin Journey" />
+            <Label fx:id="welcomeLabel" alignment="CENTER" prefHeight="94.0" prefWidth="498.0" style="-fx-font-size: 32; -fx-text-fill: white; -fx-font-weight: bold;" wrapText="true" />
+            <Label fx:id="subLabel" alignment="CENTER" prefHeight="78.0" prefWidth="406.0" style="-fx-font-size: 18; -fx-text-fill: #afc9ff;" wrapText="true" />
+            <Button fx:id="journeyButton" mnemonicParsing="false" onAction="#startJourney" prefHeight="52.0" prefWidth="480.0" style="-fx-background-color: #1a1a4e; -fx-text-fill: white; -fx-font-size: 18; -fx-padding: 12 32; -fx-font-weight: bold; -fx-background-radius: 8; -fx-border-color: #2a3580; -fx-border-radius: 8; -fx-border-width: 1.5; -fx-cursor: hand;" text="Begin Journey" />
          </children>
       </VBox>
    </children>

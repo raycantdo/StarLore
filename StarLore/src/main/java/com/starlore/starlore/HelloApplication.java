@@ -13,6 +13,7 @@ public class HelloApplication extends Application {
         FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("SplashView.fxml"));
         Scene scene = new Scene(fxmlLoader.load(),950,700);
         stage.setTitle("StarLore");
+        stage.setResizable(false);
         stage.setScene(scene);
         stage.show();
     }

@@ -55,7 +55,7 @@
                <children>
                   <StackPane fx:id="storyCard" onDragDetected="#launchStoryMode" prefHeight="150.0" prefWidth="200.0" style="-fx-background-color: #4a0080; -fx-background-radius: 18; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, #7a00c0, 18, 0, 0, 0);" GridPane.columnIndex="1">
                      <children>
-                        <VBox alignment="CENTER_LEFT" prefHeight="200.0" prefWidth="100.0" spacing="10.0" style="-fx-padding: 28;">
+                        <VBox alignment="CENTER_LEFT" onMouseClicked="#launchStoryMode" prefHeight="200.0" prefWidth="100.0" spacing="10.0" style="-fx-padding: 28;">
                            <children>
                               <Label style="-fx-font-size: 36;" text="📖" />
                               <Label style="-fx-font-size: 22; -fx-font-weight: bold;                                                   -fx-text-fill: white;" text="Story Mode" />
@@ -88,7 +88,7 @@
                   </StackPane>
                   <StackPane fx:id="arcadeCard" onDragDetected="#launchArcade" prefHeight="150.0" prefWidth="200.0" style="-fx-background-color: #6e0a0a;                                       -fx-background-radius: 18;                                       -fx-cursor: hand;                                       -fx-effect: dropshadow(gaussian, #ae1a1a, 18, 0, 0, 0);" GridPane.rowIndex="1">
                      <children>
-                        <VBox alignment="BOTTOM_LEFT" prefHeight="200.0" prefWidth="100.0" spacing="10.0" style="-fx-padding: 28;">
+                        <VBox alignment="BOTTOM_LEFT" onMouseClicked="#launchArcade" prefHeight="200.0" prefWidth="100.0" spacing="10.0" style="-fx-padding: 28;">
                            <children>
                               <Label style="-fx-font-size: 36;" text="🌠" />
                               <Label style="-fx-font-size: 22; -fx-font-weight: bold;                                                   -fx-text-fill: white;" text="Shooting Star Arcade" />

@@ -109,7 +109,7 @@ public class GameHubController {
         @FXML
         private void launchStoryMode() {
             transitionOverlay.setVisible(true);
-            //playBookTransition(() -> navigateTo("StoryMode.fxml"));
+            playBookTransition(() -> navigateTo("BattleScreen.fxml"));
         }
 
     @FXML
@@ -147,7 +147,25 @@ public class GameHubController {
         @FXML
         private void launchArcade() {
             transitionOverlay.setVisible(true);
-            //playArcadeTransition(() -> navigateTo("Arcade.fxml"));
+            playArcadeTransition(() -> {
+                try {
+                    // Point this directly to the Shooting Star game view!
+                    javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("ShootingStar.fxml"));
+                    javafx.scene.Parent root = loader.load();
+
+                    root.setOpacity(0);
+                    javafx.stage.Stage stage = (javafx.stage.Stage) arcadeCard.getScene().getWindow();
+                    stage.setScene(new javafx.scene.Scene(root));
+
+                    javafx.animation.FadeTransition fadeIn = new javafx.animation.FadeTransition(javafx.util.Duration.seconds(1), root);
+                    fadeIn.setFromValue(0);
+                    fadeIn.setToValue(1);
+                    fadeIn.play();
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
         }
 
         // ─── Transition Animations ────────────────────────────────

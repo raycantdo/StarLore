@@ -6,16 +6,25 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
+<?import javafx.scene.text.Font?>
 
-
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="700.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.starlore.starlore.HelloController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="700.0" prefWidth="950.0" style="-fx-background-color: #0d1033;" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.starlore.starlore.HelloController">
    <children>
       <VBox alignment="CENTER" layoutX="24.8" layoutY="93.0" prefHeight="390.0" prefWidth="950.0" spacing="18.0" AnchorPane.leftAnchor="25.0" AnchorPane.rightAnchor="25.0" AnchorPane.topAnchor="120.0">
          <children>
-            <Label style="-fx-font-size: 42; -fx-font-weight: bold;" text="StarLore" />
-            <Label style="-fx-font-size: 24;" text="Constellation Chronicles" />
-            <Label style="-fx-font-size: 18;" text="The Heaven Awaits" />
-            <TextField fx:id="nameField" maxWidth="320.0" onAction="#checkPlayer" promptText="Enter your Astronomer Name" />
+            <Label style="-fx-font-size: 42; -fx-font-weight: bold; -fx-text-fill: white; -fx-effect: dropshadow(gaussian, #afc9ff, 20, 0.3, 0, 0);" text="StarLore">
+               <font>
+                  <Font name="Georgia Bold" size="82.0" />
+               </font></Label>
+            <Label style="-fx-font-size: 24; -fx-text-fill: #afc9ff; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, #afc9ff, 10, 0.2, 0, 0);" text="Constellation Chronicles">
+               <font>
+                  <Font name="Georgia Bold" size="38.0" />
+               </font></Label>
+            <Label style="-fx-font-size: 16; -fx-text-fill: #afc9ff; -fx-letter-spacing: 4;" text="The Heaven Awaits">
+               <font>
+                  <Font name="Arial" size="12.0" />
+               </font></Label>
+            <TextField fx:id="nameField" alignment="CENTER" maxWidth="320.0" onAction="#checkPlayer" prefHeight="52.0" prefWidth="480.0" promptText="Enter your Astronomer Name" style="-fx-background-color: #1a2050; -fx-text-fill: white; -fx-font-size: 13; -fx-prompt-text-fill: #6677aa; -fx-background-radius: 8; -fx-border-color: #2a3580; -fx-border-radius: 8; -fx-border-width: 1.5; -fx-padding: 0 16;" />
             <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="12.0">
                <children>
                   <Circle fill="DODGERBLUE" radius="6.0" stroke="BLACK" strokeType="INSIDE" />

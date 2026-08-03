@@ -35,6 +35,7 @@ public class WelcomeController {
     @FXML
     private void startJourney() {
         try {
+
             FXMLLoader loader = new FXMLLoader(getClass().getResource("GameHubView.fxml"));
             Parent root = loader.load();
 

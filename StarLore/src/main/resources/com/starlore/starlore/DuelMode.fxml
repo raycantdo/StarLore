@@ -71,22 +71,12 @@
          <children>
             <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" spacing="28.0">
                <children>
-                  <Label fx:id="resultLabel" style="-fx-font-size: 52; -fx-font-weight: bold;                                       -fx-text-fill: white;" text="⚔️ YOU WIN!" />
+                  <Label fx:id="resultLabel" style="-fx-font-size: 52; -fx-font-weight: bold;                                       -fx-text-fill: white;" text="⚔ YOU WIN!" />
                   <Label fx:id="resultScoreLabel" style="-fx-font-size: 20; -fx-text-fill: #afc9ff;" text="Your Score: 0 — AI Score: 0" />
                   <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="24.0">
                      <children>
-                        <Button fx:id="rematchBtn" mnemonicParsing="false" onAction="#rematch" style="-fx-background-color: #0a1a6e; -fx-text-fill: white;
-                                               -fx-font-size: 16;
-                                               -fx-padding: 12 32;
-                                               -fx-background-radius: 8;
-                                               -fx-cursor: hand;" text="⚔️ Rematch" />
-                        <Button fx:id="backBtn" mnemonicParsing="false"  onAction="#backToHub"
-                                style="-fx-background-color: #2a2a5a;
-                                               -fx-text-fill: white;
-                                               -fx-font-size: 16;
-                                               -fx-padding: 12 32;
-                                               -fx-background-radius: 8;
-                                               -fx-cursor: hand;" text="🏠 Back to Hub" />
+                        <Button fx:id="rematchBtn" mnemonicParsing="false" onAction="#rematch" style="-fx-background-color: #0a1a6e; -fx-text-fill: white;                                                -fx-font-size: 16;                                                -fx-padding: 12 32;                                                -fx-background-radius: 8;                                                -fx-cursor: hand;" text="⚔ Rematch" />
+                        <Button fx:id="backBtn" mnemonicParsing="false" onAction="#backToHub" style="-fx-background-color: #2a2a5a;                                                -fx-text-fill: white;                                                -fx-font-size: 16;                                                -fx-padding: 12 32;                                                -fx-background-radius: 8;                                                -fx-cursor: hand;" text="🏠 Back to Hub" />
                      </children>
                   </HBox>
                </children>
