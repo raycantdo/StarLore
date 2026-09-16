@@ -15,8 +15,23 @@ public class WelcomeController {
     @FXML private Label welcomeLabel;
     @FXML private Label subLabel;
     @FXML private Button journeyButton;
+    @FXML
+    public void initialize() {
+        SoundManager.playMenuMusic();
+        welcomeLabel.sceneProperty().addListener((obsScene, oldScene, newScene) -> {
+            if (newScene != null) {
+                newScene.windowProperty().addListener((obsWindow, oldWindow, newWindow) -> {
+                    if (newWindow instanceof Stage stage) {
+                        stage.setFullScreen(true);
+                        stage.setFullScreenExitHint(""); // hides the "Press ESC..." banner
+                    }
+                });
+            }
+        });
+    }
 
     private Player currentPlayer;
+
 
     public void setPlayer(Player player) {
         this.currentPlayer = player;
