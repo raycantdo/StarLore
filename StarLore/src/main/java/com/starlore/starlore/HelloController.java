@@ -21,6 +21,11 @@ public class HelloController {
     private Button beginButton;
 
     @FXML
+    public void initialize() {
+        SoundManager.playMenuMusic();
+    }
+
+    @FXML
     private void checkPlayer() {
 
         String name = nameField.getText().trim();

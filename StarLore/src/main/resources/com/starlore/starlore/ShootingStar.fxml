@@ -1,13 +1,129 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.shape.Circle?>
 <?import javafx.scene.text.Font?>
+
+<AnchorPane fx:id="rootPane" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/17"
+            fx:controller="com.starlore.starlore.ShootingStarController"
+            prefWidth="900" prefHeight="620" style="-fx-background-color: #0b0f1a;">
 <?import javafx.scene.control.Button?>
 
 <AnchorPane fx:id="rootPane" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/17" fx:controller="com.starlore.starlore.ShootingStarController" prefWidth="950" prefHeight="700" style="-fx-background-color: #0b0b19;">
    <children>
+      <Canvas fx:id="gameCanvas" width="900" height="620" />
+
+      <!-- ─── Top HUD bar ─────────────────────────────────────────── -->
+      <HBox layoutX="18" layoutY="14" spacing="34" AnchorPane.leftAnchor="18" AnchorPane.rightAnchor="18">
+         <children>
+
+            <!-- HEALTH -->
+            <VBox spacing="4">
+               <children>
+                  <Label text="HEALTH" textFill="#7f88a3">
+                     <font><Font name="Verdana Bold" size="11" /></font>
+                  </Label>
+                  <HBox spacing="6">
+                     <children>
+                        <Circle fx:id="life1" radius="9" fill="#ff5d73" />
+                        <Circle fx:id="life2" radius="9" fill="#ff5d73" />
+                        <Circle fx:id="life3" radius="9" fill="#ff5d73" />
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+
+            <!-- LEVEL PROGRESS -->
+            <VBox spacing="4">
+               <children>
+                  <Label fx:id="levelLabel" text="LVL 1" textFill="#7f88a3">
+                     <font><Font name="Verdana Bold" size="11" /></font>
+                  </Label>
+                  <ProgressBar fx:id="levelProgressBar" prefWidth="150" prefHeight="10" progress="0.0"
+                               style="-fx-accent: #4da3ff;" />
+               </children>
+            </VBox>
+
+            <!-- SCORE -->
+            <VBox spacing="4">
+               <children>
+                  <Label text="SCORE" textFill="#7f88a3">
+                     <font><Font name="Verdana Bold" size="11" /></font>
+                  </Label>
+                  <Label fx:id="scoreLabel" text="0" textFill="WHITE">
+                     <font><Font name="Verdana Bold" size="18" /></font>
+                  </Label>
+               </children>
+            </VBox>
+
+            <!-- BEST -->
+            <VBox spacing="4">
+               <children>
+                  <Label text="BEST" textFill="#7f88a3">
+                     <font><Font name="Verdana Bold" size="11" /></font>
+                  </Label>
+                  <Label fx:id="bestLabel" text="0" textFill="#ffd166">
+                     <font><Font name="Verdana Bold" size="18" /></font>
+                  </Label>
+               </children>
+            </VBox>
+
+            <!-- TIMER -->
+            <VBox spacing="4">
+               <children>
+                  <Label text="TIME" textFill="#7f88a3">
+                     <font><Font name="Verdana Bold" size="11" /></font>
+                  </Label>
+                  <Label fx:id="timerLabel" text="60s" textFill="WHITE">
+                     <font><Font name="Verdana Bold" size="18" /></font>
+                  </Label>
+               </children>
+            </VBox>
+
+            <!-- COMBO -->
+            <VBox spacing="4">
+               <children>
+                  <Label text="COMBO" textFill="#7f88a3">
+                     <font><Font name="Verdana Bold" size="11" /></font>
+                  </Label>
+                  <Label fx:id="comboLabel" text="x1" textFill="#f0d060">
+                     <font><Font name="Verdana Bold" size="18" /></font>
+                  </Label>
+               </children>
+            </VBox>
+
+         </children>
+      </HBox>
+
+      <!-- ─── Back button ─────────────────────────────────────────── -->
+      <Button fx:id="backButton" text="&#8592;"
+              onAction="#backToHub"
+              layoutX="856" layoutY="14"
+              style="-fx-background-color: rgba(255,255,255,0.06);
+                     -fx-background-radius: 8;
+                     -fx-text-fill: white;
+                     -fx-font-size: 18;
+                     -fx-cursor: hand;
+                     -fx-min-width: 32; -fx-min-height: 32;"/>
+
+      <!-- ─── Legend (bottom-left, like a radar key) ────────────────── -->
+      <VBox layoutX="18" AnchorPane.bottomAnchor="16" spacing="3" style="-fx-opacity: 0.85;">
+         <children>
+            <Label text="⭐ Stars / Planets / Stardust — points" textFill="#8fd6ff">
+               <font><Font name="Verdana" size="11" /></font>
+            </Label>
+            <Label text="☄ Meteor −1 life   ●  Black Hole −2 lives   ◆ Dark Matter −10 pts" textFill="#ff8fa3">
+               <font><Font name="Verdana" size="11" /></font>
+            </Label>
+         </children>
+      </VBox>
+
       <Canvas fx:id="gameCanvas" height="700" width="950" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
       <Button fx:id="backButton" text="←"
               onAction="#backToHub"
