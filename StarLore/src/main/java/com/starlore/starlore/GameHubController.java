@@ -33,6 +33,7 @@ public class GameHubController {
 
         @FXML
         public void initialize() {
+            SoundManager.playMenuMusic();
             setupHoverEffects();
         }
 
@@ -152,6 +153,9 @@ public class GameHubController {
                     // Point this directly to the Shooting Star game view!
                     javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(getClass().getResource("ShootingStar.fxml"));
                     javafx.scene.Parent root = loader.load();
+
+                    ShootingStarController controller = loader.getController();
+                    controller.setPlayer(currentPlayer);
 
                     root.setOpacity(0);
                     javafx.stage.Stage stage = (javafx.stage.Stage) arcadeCard.getScene().getWindow();
