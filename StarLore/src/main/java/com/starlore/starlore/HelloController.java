@@ -43,7 +43,7 @@ public class HelloController {
 
             root.setOpacity(0);
             Stage stage = (Stage) nameField.getScene().getWindow();
-            stage.setScene(new Scene(root));
+            SceneManager.switchScene(stage, root);
 
             // Fade in welcome screen
             FadeTransition fadeIn = new FadeTransition(Duration.seconds(1.5), root);

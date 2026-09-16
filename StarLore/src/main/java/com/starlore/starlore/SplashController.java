@@ -4,9 +4,9 @@ import javafx.animation.*;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -20,18 +20,22 @@ import java.util.Random;
 public class SplashController {
 
     @FXML
+    private AnchorPane rootPane;
+
+    @FXML
     private Canvas splashCanvas;
 
     private GraphicsContext gc;
     private Random random = new Random();
 
     // ─── Background Stars ─────────────────────────────────────
-    private double[] starX = new double[150];
-    private double[] starY = new double[150];
-    private double[] starRadius = new double[150];
-    private double[] starOpacity = new double[150];
-    private double[] starTwinkleSpeed = new double[150];
-    private boolean[] starTwinkleDir = new boolean[150];
+    private static final int NUM_STARS = 300;
+    private double[] starX = new double[NUM_STARS];
+    private double[] starY = new double[NUM_STARS];
+    private double[] starRadius = new double[NUM_STARS];
+    private double[] starOpacity = new double[NUM_STARS];
+    private double[] starTwinkleSpeed = new double[NUM_STARS];
+    private boolean[] starTwinkleDir = new boolean[NUM_STARS];
 
     // ─── StarLore Constellation Points ───────────────────────
     // Each letter defined by star positions and connections
@@ -132,7 +136,19 @@ public class SplashController {
     @FXML
     public void initialize() {
         gc = splashCanvas.getGraphicsContext2D();
-        generateBackgroundStars();
+
+        if (rootPane != null) {
+            splashCanvas.widthProperty().bind(rootPane.prefWidthProperty());
+            splashCanvas.heightProperty().bind(rootPane.prefHeightProperty());
+            rootPane.prefWidthProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal.doubleValue() > 0) {
+                    generateBackgroundStars(newVal.doubleValue(), 700.0);
+                }
+            });
+        }
+
+        double initialW = rootPane != null && rootPane.getPrefWidth() > 0 ? rootPane.getPrefWidth() : 1400.0;
+        generateBackgroundStars(initialW, 700.0);
 
         splashCanvas.sceneProperty().addListener((obs, oldScene, newScene) -> {
             if (newScene != null) {
@@ -143,10 +159,10 @@ public class SplashController {
 
     // ─── Generate Background Stars ────────────────────────────
 
-    private void generateBackgroundStars() {
-        for (int i = 0; i < 150; i++) {
-            starX[i] = random.nextDouble() * 1000;
-            starY[i] = random.nextDouble() * 700;
+    private void generateBackgroundStars(double width, double height) {
+        for (int i = 0; i < NUM_STARS; i++) {
+            starX[i] = random.nextDouble() * width;
+            starY[i] = random.nextDouble() * height;
             starRadius[i] = random.nextDouble() * 2 + 0.5;
             starOpacity[i] = random.nextDouble() * 0.5 + 0.1;
             starTwinkleSpeed[i] = random.nextDouble() * 0.02 + 0.005;
@@ -163,7 +179,7 @@ public class SplashController {
         KeyFrame kf = new KeyFrame(Duration.millis(16), e -> {
             globalTime += 0.016;
             update();
-           render();
+            render();
         });
 
         masterTimeline.getKeyFrames().add(kf);
@@ -182,7 +198,7 @@ public class SplashController {
         }
 
         // Twinkle update
-        for (int i = 0; i < 150; i++) {
+        for (int i = 0; i < NUM_STARS; i++) {
             if (starTwinkleDir[i]) {
                 starOpacity[i] += starTwinkleSpeed[i];
                 if (starOpacity[i] >= 0.9) starTwinkleDir[i] = false;
@@ -198,47 +214,51 @@ public class SplashController {
             for (int i = 0; i < 8; i++) {
                 double letterStart = i / 8.0;
                 double letterEnd = (i + 1) / 8.0;
-                if (progress >= letterStart) {
-                    letterProgress[i] = Math.min(1.0,
-                            (progress - letterStart) / (letterEnd - letterStart));
+
+                if (progress <= letterStart) {
+                    letterProgress[i] = 0;
+                } else if (progress >= letterEnd) {
+                    letterProgress[i] = 1.0;
+                } else {
+                    letterProgress[i] = (progress - letterStart) / (letterEnd - letterStart);
                 }
             }
         }
 
-        // Phase 3 — Glow pulse (3 to 3.5 sec)
-        // Handled in render
+        // Phase 3 — Shooting star (3.8 to 5.5 sec)
+        if (globalTime >= 3.8 && globalTime < 5.5) {
+            shootingStarX += 22;
+            shootingStarY += 0.8;
 
-        // Phase 4 — Shooting star (3.5 to 4.5 sec)
-        if (globalTime >= 4 && globalTime < 6) {
-            double progress = (globalTime - 4) / 2.0;
-            shootingStarX = -50 + progress * 1100;
-            shootingStarY = 320 + progress * 20;
-
-            // Add sparkles
+            // Add sparkles near constellation stars as shooting star passes
             if (random.nextDouble() < 0.4) {
                 sparkles.add(new double[]{
-                        shootingStarX + random.nextDouble() * 20 - 10,
-                        shootingStarY + random.nextDouble() * 20 - 10,
+                        shootingStarX + (random.nextDouble() * 20 - 10),
+                        shootingStarY + (random.nextDouble() * 20 - 10),
                         1.0, // opacity
                         random.nextDouble() * 3 + 1 // size
                 });
             }
         }
 
-        // Update sparkles — fade out
-        sparkles.removeIf(s -> s[2] <= 0);
-        for (double[] s : sparkles) {
-            s[2] -= 0.03;
+        // Update sparkles
+        for (int i = sparkles.size() - 1; i >= 0; i--) {
+            double[] s = sparkles.get(i);
+            s[2] -= 0.04; // fade out
+            if (s[2] <= 0) sparkles.remove(i);
         }
 
-        // Phase 5 — Constellation to text (4.5 to 5.3 sec)
-        if (globalTime >= 6 && globalTime < 6.8) {
-            double progress = (globalTime - 6) / 0.8;
-            constellationOpacity = 1.0 - progress;
-            textOpacity = progress;
+        // Phase 4 — StarLore text fades in (5.0 to 6.0 sec)
+        if (globalTime >= 5.0 && globalTime < 6.5) {
+            textOpacity = Math.min(1.0, (globalTime - 5.0) / 1.0);
         }
 
-        // Phase 6 — Fade out and navigate (5.3 to 6.3 sec)
+        // Phase 5 — Constellation slowly dims (5.5 to 6.5 sec)
+        if (globalTime >= 5.5 && globalTime < 6.8) {
+            constellationOpacity = Math.max(0.2, 1.0 - (globalTime - 5.5) * 0.8);
+        }
+
+        // Phase 6 — Fade out and navigate (7.5 sec)
         if (globalTime >= 7.5) {
             masterTimeline.stop();
             navigateToNameScreen();
@@ -248,12 +268,15 @@ public class SplashController {
     // ─── Render ───────────────────────────────────────────────
 
     private void render() {
+        double w = splashCanvas.getWidth() > 0 ? splashCanvas.getWidth() : 1400.0;
+        double h = splashCanvas.getHeight() > 0 ? splashCanvas.getHeight() : 700.0;
+
         // Clear
         gc.setFill(Color.rgb(5, 8, 22));
-        gc.fillRect(0, 0, 1000, 700);
+        gc.fillRect(0, 0, w, h);
 
         // Draw background stars
-        for (int i = 0; i < 150; i++) {
+        for (int i = 0; i < NUM_STARS; i++) {
             gc.setGlobalAlpha(starOpacity[i] * starfieldOpacity[0]);
             gc.setFill(Color.rgb(175, 201, 255));
             gc.fillOval(starX[i] - starRadius[i],
@@ -263,33 +286,31 @@ public class SplashController {
         }
         gc.setGlobalAlpha(1.0);
 
-        // Draw constellation letters
+        // Draw constellation letters centered on wider screen
         drawConstellation();
 
         // Draw shooting star
-        if (globalTime >= 4.0 && globalTime < 6.0) {
+        if (globalTime >= 3.8 && globalTime < 5.5) {
             drawShootingStar();
         }
 
         // Draw sparkles
+        double canvasW = splashCanvas.getWidth() > 0 ? splashCanvas.getWidth() : 950.0;
+        double offsetX = Math.max(0, (canvasW - 950.0) / 2.0);
+
         for (double[] s : sparkles) {
             gc.setGlobalAlpha(s[2]);
             gc.setFill(Color.rgb(255, 255, 200));
-            gc.fillOval(s[0] - s[3] / 2, s[1] - s[3] / 2, s[3], s[3]);
+            gc.fillOval(s[0] + offsetX - s[3] / 2, s[1] - s[3] / 2, s[3], s[3]);
         }
         gc.setGlobalAlpha(1.0);
-
-        // Draw StarLore text
-       // if (textOpacity > 0) {
-       //     drawStarLoreText();
-      //  }
 
         // Phase 6 fade out
         if (globalTime >= 6.8) {
             double fadeProgress = Math.min(1.0, (globalTime - 6.8) / 0.7);
             gc.setGlobalAlpha(fadeProgress);
             gc.setFill(Color.rgb(5, 8, 22));
-            gc.fillRect(0, 0, 1000, 700);
+            gc.fillRect(0, 0, w, h);
             gc.setGlobalAlpha(1.0);
         }
     }
@@ -297,6 +318,9 @@ public class SplashController {
     // ─── Draw Constellation ───────────────────────────────────
 
     private void drawConstellation() {
+        double canvasW = splashCanvas.getWidth() > 0 ? splashCanvas.getWidth() : 950.0;
+        double offsetX = Math.max(0, (canvasW - 950.0) / 2.0);
+
         for (int l = 0; l < 8; l++) {
             if (letterProgress[l] <= 0) continue;
 
@@ -321,13 +345,13 @@ public class SplashController {
                 int from = lconns[c][0];
                 int to = lconns[c][1];
                 gc.strokeLine(
-                        lstars[from][0], lstars[from][1],
-                        lstars[to][0], lstars[to][1]);
+                        lstars[from][0] + offsetX, lstars[from][1],
+                        lstars[to][0] + offsetX, lstars[to][1]);
             }
 
             // Draw stars
             for (int s = 0; s < lstars.length; s++) {
-                double sx = lstars[s][0];
+                double sx = lstars[s][0] + offsetX;
                 double sy = lstars[s][1];
 
                 // Outer glow
@@ -346,9 +370,13 @@ public class SplashController {
     // ─── Draw Shooting Star ───────────────────────────────────
 
     private void drawShootingStar() {
+        double canvasW = splashCanvas.getWidth() > 0 ? splashCanvas.getWidth() : 950.0;
+        double offsetX = Math.max(0, (canvasW - 950.0) / 2.0);
+        double actualX = shootingStarX + offsetX;
+
         // Trail
         for (int i = 0; i < 12; i++) {
-            double trailX = shootingStarX - i * 12;
+            double trailX = actualX - i * 12;
             double trailY = shootingStarY - i * 1.5;
             double trailOpacity = (12 - i) / 12.0 * 0.8;
             double trailSize = (12 - i) / 12.0 * 8;
@@ -361,30 +389,11 @@ public class SplashController {
 
         // Star head
         gc.setFill(Color.WHITE);
-        gc.fillOval(shootingStarX - 6, shootingStarY - 6, 12, 12);
+        gc.fillOval(actualX - 6, shootingStarY - 6, 12, 12);
 
         // Head glow
         gc.setFill(Color.rgb(255, 255, 200, 0.4));
-        gc.fillOval(shootingStarX - 14, shootingStarY - 14, 28, 28);
-    }
-
-    // ─── Draw StarLore Text ───────────────────────────────────
-
-    private void drawStarLoreText() {
-        gc.setGlobalAlpha(textOpacity);
-
-        // Glow effect — draw text multiple times with blur simulation
-        gc.setFill(Color.rgb(240, 200, 80, 0.3));
-        gc.setFont(Font.font("Arial", FontWeight.BOLD, 72));
-        gc.fillText("StarLore", 248, 358);
-        gc.fillText("StarLore", 252, 362);
-
-        // Main text
-        gc.setFill(Color.WHITE);
-        gc.setFont(Font.font("Arial", FontWeight.BOLD, 68));
-        gc.fillText("StarLore", 250, 358);
-
-        gc.setGlobalAlpha(1.0);
+        gc.fillOval(actualX - 14, shootingStarY - 14, 28, 28);
     }
 
     // ─── Navigate ─────────────────────────────────────────────
@@ -395,7 +404,7 @@ public class SplashController {
                     getClass().getResource("hello-view.fxml"));
             root.setOpacity(0);
             Stage stage = (Stage) splashCanvas.getScene().getWindow();
-            stage.setScene(new Scene(root));
+            SceneManager.switchScene(stage, root);
 
             FadeTransition fadeIn = new FadeTransition(Duration.seconds(1.5), root);
             fadeIn.setFromValue(0);

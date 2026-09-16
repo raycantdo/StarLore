@@ -15,6 +15,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -23,6 +24,7 @@ import java.util.Random;
 
 public class BattleController {
 
+    @FXML private AnchorPane rootPane;
     @FXML private ImageView backgroundImageView;
     @FXML private ImageView perseusSprite;
     @FXML private ImageView medusaSprite;
@@ -45,6 +47,11 @@ public class BattleController {
 
     @FXML
     public void initialize() {
+        if (rootPane != null) {
+            backgroundImageView.fitWidthProperty().bind(rootPane.prefWidthProperty());
+            backgroundImageView.fitHeightProperty().bind(rootPane.prefHeightProperty());
+        }
+
         // Load Background
         backgroundImageView.setImage(new Image(getClass().getResource("images/battle_gemini.png").toExternalForm()));
 
@@ -309,7 +316,7 @@ public class BattleController {
         try {
             Parent root = FXMLLoader.load(getClass().getResource("GameHubView.fxml"));
             Stage stage = (Stage) backButton.getScene().getWindow();
-            stage.setScene(new Scene(root));
+            SceneManager.switchScene(stage, root);
         } catch (Exception e) {
             e.printStackTrace();
         }

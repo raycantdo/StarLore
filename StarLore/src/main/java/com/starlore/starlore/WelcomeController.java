@@ -44,7 +44,7 @@ public class WelcomeController {
 
             root.setOpacity(0);
             Stage stage = (Stage) journeyButton.getScene().getWindow();
-            stage.setScene(new Scene(root));
+            SceneManager.switchScene(stage, root);
 
             FadeTransition fadeIn = new FadeTransition(Duration.seconds(1.5), root);
             fadeIn.setFromValue(0);

@@ -94,7 +94,7 @@ public class GameHubController {
                 Parent root = FXMLLoader.load(getClass().getResource("hello-view.fxml"));
                 root.setOpacity(0);
                 Stage stage = (Stage) storyCard.getScene().getWindow();
-                stage.setScene(new Scene(root));
+                SceneManager.switchScene(stage, root);
                 FadeTransition fadeIn = new FadeTransition(Duration.seconds(1), root);
                 fadeIn.setFromValue(0);
                 fadeIn.setToValue(1);
@@ -125,7 +125,7 @@ public class GameHubController {
 
                 root.setOpacity(0);
                 Stage stage = (Stage) storyCard.getScene().getWindow();
-                stage.setScene(new Scene(root));
+                SceneManager.switchScene(stage, root);
 
                 FadeTransition fadeIn = new FadeTransition(Duration.seconds(1), root);
                 fadeIn.setFromValue(0);
@@ -155,7 +155,7 @@ public class GameHubController {
 
                     root.setOpacity(0);
                     javafx.stage.Stage stage = (javafx.stage.Stage) arcadeCard.getScene().getWindow();
-                    stage.setScene(new javafx.scene.Scene(root));
+                    SceneManager.switchScene(stage, root);
 
                     javafx.animation.FadeTransition fadeIn = new javafx.animation.FadeTransition(javafx.util.Duration.seconds(1), root);
                     fadeIn.setFromValue(0);
@@ -450,7 +450,7 @@ public class GameHubController {
                 Parent root = loader.load();
                 root.setOpacity(0);
                 Stage stage = (Stage) storyCard.getScene().getWindow();
-                stage.setScene(new Scene(root));
+                SceneManager.switchScene(stage, root);
                 FadeTransition fadeIn = new FadeTransition(Duration.seconds(1), root);
                 fadeIn.setFromValue(0);
                 fadeIn.setToValue(1);

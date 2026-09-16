@@ -24,6 +24,7 @@ import java.util.Random;
 
 public class ShootingStarController {
 
+    @FXML private javafx.scene.layout.AnchorPane rootPane;
     @FXML private Canvas gameCanvas;
     @FXML private Label scoreLabel;
     //@FXML private Label livesLabel;
@@ -53,6 +54,15 @@ public class ShootingStarController {
     public void initialize() {
         gc = gameCanvas.getGraphicsContext2D();
         gameCanvas.setFocusTraversable(true);
+
+        if (rootPane != null) {
+            gameCanvas.widthProperty().bind(rootPane.prefWidthProperty());
+            gameCanvas.heightProperty().bind(rootPane.prefHeightProperty());
+        }
+
+        // Keep timer centered at top and combo anchored on right
+        timerLabel.layoutXProperty().bind(gameCanvas.widthProperty().divide(2).subtract(50));
+        comboLabel.layoutXProperty().bind(gameCanvas.widthProperty().subtract(160));
 
         // Load Sprites
         try {
@@ -258,17 +268,20 @@ public class ShootingStarController {
     }
 
     private void showGameOver() {
+        double w = gameCanvas.getWidth();
+        double h = gameCanvas.getHeight();
         gc.setFill(Color.web("#0b0b19", 0.92));
-        gc.fillRect(0, 0, gameCanvas.getWidth(), gameCanvas.getHeight());
+        gc.fillRect(0, 0, w, h);
 
+        double centerX = w / 2.0;
         gc.setFill(Color.RED);
         gc.setFont(Font.font("Verdana", 38));
-        gc.fillText("MISSION ENDED", 240, 240);
+        gc.fillText("MISSION ENDED", centerX - 170, 240);
 
         gc.setFill(Color.WHITE);
         gc.setFont(Font.font("Verdana", 20));
-        gc.fillText("Final Cosmic Score: " + score, 280, 320);
-        gc.fillText("Max Combo: x" + maxCombo, 310, 360); // NEW
+        gc.fillText("Final Cosmic Score: " + score, centerX - 120, 320);
+        gc.fillText("Max Combo: x" + maxCombo, centerX - 80, 360); // NEW
     }
 
     // NEW — Back to hub
@@ -282,7 +295,7 @@ public class ShootingStarController {
             GameHubController controller = loader.getController();
             if (currentPlayer != null) controller.setPlayer(currentPlayer);
             Stage stage = (Stage) gameCanvas.getScene().getWindow();
-            stage.setScene(new Scene(root));
+            SceneManager.switchScene(stage, root);
         } catch (Exception e) {
             e.printStackTrace();
         }

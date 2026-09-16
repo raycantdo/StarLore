@@ -526,7 +526,7 @@ public class DuelController {
 
             root.setOpacity(0);
             Stage stage = (Stage) playerCanvas.getScene().getWindow();
-            stage.setScene(new Scene(root));
+            SceneManager.switchScene(stage, root);
 
             FadeTransition fadeIn = new FadeTransition(Duration.seconds(1), root);
             fadeIn.setFromValue(0);
