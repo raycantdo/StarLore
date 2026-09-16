@@ -8,7 +8,6 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -26,8 +25,6 @@ public class SplashController {
 
     @FXML
     private Canvas splashCanvas;
-    @FXML
-    private AnchorPane rootPane;
 
     private GraphicsContext gc;
     private Random random = new Random();
@@ -140,8 +137,6 @@ public class SplashController {
     @FXML
     public void initialize() {
         SoundManager.playMenuMusic();
-        splashCanvas.widthProperty().bind(rootPane.widthProperty());
-        splashCanvas.heightProperty().bind(rootPane.heightProperty());
         gc = splashCanvas.getGraphicsContext2D();
 
         if (rootPane != null) {

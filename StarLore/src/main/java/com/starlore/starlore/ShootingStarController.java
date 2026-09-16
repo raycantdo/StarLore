@@ -32,15 +32,13 @@ import javafx.util.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import javafx.scene.layout.AnchorPane; // add this import at the top
+import javafx.scene.layout.AnchorPane;
 
 public class ShootingStarController {
 
-    @FXML private AnchorPane rootPane;   // add this — fx:id="rootPane" already exists in the FXML
-    @FXML private javafx.scene.layout.AnchorPane rootPane;
+    @FXML private AnchorPane rootPane;
     @FXML private Canvas gameCanvas;
 
-    // ...keep all your other existing @FXML fields unchanged
     @FXML private Label scoreLabel;
     @FXML private Label bestLabel;
     @FXML private Label timerLabel;
@@ -88,50 +86,17 @@ public class ShootingStarController {
         SoundManager.stopMenuMusic();
         loadSounds();
         gameMusicPlayer.play();
-        gameCanvas.widthProperty().bind(rootPane.widthProperty());
-        gameCanvas.heightProperty().bind(rootPane.heightProperty());
         gameCanvas.setFocusTraversable(true);
-        // ── NEW: defensive re-assert. If your game screen is ever opened
-        // ── in a way that skipped the Welcome screen, this makes sure it's
-        // ── still full screen instead of quietly falling back to windowed.
-        rootPane.sceneProperty().addListener((obsScene, oldScene, newScene) -> {
-            if (newScene != null) {
-                newScene.windowProperty().addListener((obsWindow, oldWindow, newWindow) -> {
-                    if (newWindow instanceof Stage stage) {
-                        stage.setFullScreen(true);
-                    }
-                });
-            }
-        });
 
-        // Make the game canvas always fill the available window/screen space
-        gameCanvas.widthProperty().bind(rootPane.widthProperty());
-        gameCanvas.heightProperty().bind(rootPane.heightProperty());
+        if (rootPane != null) {
+            gameCanvas.widthProperty().bind(rootPane.widthProperty());
+            gameCanvas.heightProperty().bind(rootPane.heightProperty());
+        }
 
-        // Re-seed the background stars whenever the real size becomes known (e.g. after
-        // full screen is applied), so they're spread across the whole screen, not just
-        // the top-left 900x620 corner.
+        // Re-seed the background stars whenever the real size becomes known
         gameCanvas.widthProperty().addListener((obs, oldV, newV) -> seedBackgroundStars());
         gameCanvas.heightProperty().addListener((obs, oldV, newV) -> seedBackgroundStars());
         seedBackgroundStars();
-        if (rootPane != null) {
-            gameCanvas.widthProperty().bind(rootPane.prefWidthProperty());
-            gameCanvas.heightProperty().bind(rootPane.prefHeightProperty());
-        }
-
-        // Keep timer centered at top and combo anchored on right
-        timerLabel.layoutXProperty().bind(gameCanvas.widthProperty().divide(2).subtract(50));
-        comboLabel.layoutXProperty().bind(gameCanvas.widthProperty().subtract(160));
-
-        // Load Sprites
-        try {
-            normalStarImg = new Image(getClass().getResourceAsStream("images/star_normal.png"));
-            rareStarImg = new Image(getClass().getResourceAsStream("images/star_rare.png"));
-            imagesLoaded = true;
-        } catch (Exception e) {
-            System.out.println("Sprites not found. Using vector graphics fallback.");
-            imagesLoaded = false;
-        }
 
         best = (currentPlayer != null) ? currentPlayer.getHighestArcadeScore() : 0;
         bestLabel.setText(String.valueOf(best));
@@ -631,20 +596,12 @@ public class ShootingStarController {
 
         gc.setFill(Color.web("#05070f", 0.93));
         gc.fillRect(0, 0, w, h);
-        double w = gameCanvas.getWidth();
-        double h = gameCanvas.getHeight();
-        gc.setFill(Color.web("#0b0b19", 0.92));
-        gc.fillRect(0, 0, w, h);
 
         gc.setTextAlign(TextAlignment.CENTER);
 
         gc.setFill(Color.web("#ff5d73"));
         gc.setFont(Font.font("Verdana", javafx.scene.text.FontWeight.BOLD, 38));
         gc.fillText("MISSION ENDED", w / 2, h / 2 - 70);
-        double centerX = w / 2.0;
-        gc.setFill(Color.RED);
-        gc.setFont(Font.font("Verdana", 38));
-        gc.fillText("MISSION ENDED", centerX - 170, 240);
 
         gc.setFill(Color.WHITE);
         gc.setFont(Font.font("Verdana", 20));
@@ -662,11 +619,8 @@ public class ShootingStarController {
 
         gc.setFill(Color.web("#7f88a3"));
         gc.setFont(Font.font("Verdana", 13));
-        gc.fillText("Press \u2190 to return to the Hub", w / 2, h / 2 + 110);
-
+        gc.fillText("Press ← to return to the Hub", w / 2, h / 2 + 110);
         gc.setTextAlign(TextAlignment.LEFT);
-        gc.fillText("Final Cosmic Score: " + score, centerX - 120, 320);
-        gc.fillText("Max Combo: x" + maxCombo, centerX - 80, 360); // NEW
     }
 
     // NEW — Back to hub
