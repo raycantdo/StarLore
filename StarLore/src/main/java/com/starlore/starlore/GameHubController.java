@@ -370,28 +370,63 @@ public class GameHubController {
         }
     }
 
+    private double getOverlayWidth() {
+        if (transitionCanvas != null && transitionCanvas.getWidth() > 0) {
+            return transitionCanvas.getWidth();
+        }
+        if (rootStackPane != null && rootStackPane.getWidth() > 0) {
+            return rootStackPane.getWidth();
+        }
+        return 1000.0;
+    }
+
+    private double getOverlayHeight() {
+        if (transitionCanvas != null && transitionCanvas.getHeight() > 0) {
+            return transitionCanvas.getHeight();
+        }
+        if (rootStackPane != null && rootStackPane.getHeight() > 0) {
+            return rootStackPane.getHeight();
+        }
+        return 700.0;
+    }
+
     // ─── Transitions ───────────────────────────────────────────
 
     private void playBookTransition(Runnable onComplete) {
         GraphicsContext gc = transitionCanvas.getGraphicsContext2D();
+        double initW = getOverlayWidth();
+        double initH = getOverlayHeight();
+        gc.setFill(Color.rgb(5, 5, 20, 0.95));
+        gc.fillRect(0, 0, initW, initH);
+
         double[] progress = {0};
         Timeline bookFlip = new Timeline();
         bookFlip.setCycleCount(25);
         KeyFrame frame = new KeyFrame(Duration.millis(60), e -> {
             progress[0] += 0.04;
-            gc.clearRect(0, 0, 1000, 700);
+            double w = getOverlayWidth();
+            double h = getOverlayHeight();
+
+            gc.clearRect(0, 0, w, h);
             gc.setFill(Color.rgb(5, 5, 20, 0.95));
-            gc.fillRect(0, 0, 1000, 700);
-            double centerX = 500, centerY = 350, pageWidth = 300 + (progress[0] * 400), pageHeight = 220;
+            gc.fillRect(0, 0, w, h);
+
+            double centerX = w / 2.0;
+            double centerY = h / 2.0;
+            double pageWidth = 300 + (progress[0] * 400);
+            double pageHeight = 220;
+
             gc.setFill(Color.rgb(60, 0, 100, 0.9));
-            gc.fillRoundRect(centerX - pageWidth, centerY - pageHeight / 2, pageWidth, pageHeight, 10, 10);
+            gc.fillRoundRect(centerX - pageWidth, centerY - pageHeight / 2.0, pageWidth, pageHeight, 10, 10);
             gc.setFill(Color.rgb(80, 0, 130, 0.9));
-            gc.fillRoundRect(centerX, centerY - pageHeight / 2, pageWidth, pageHeight, 10, 10);
+            gc.fillRoundRect(centerX, centerY - pageHeight / 2.0, pageWidth, pageHeight, 10, 10);
         });
         bookFlip.getKeyFrames().add(frame);
         bookFlip.setOnFinished(e -> {
+            double w = getOverlayWidth();
+            double h = getOverlayHeight();
             gc.setFill(Color.rgb(20, 0, 40));
-            gc.fillRect(0, 0, 1000, 700);
+            gc.fillRect(0, 0, w, h);
             fadeOutAndNavigate(onComplete);
         });
         bookFlip.play();
@@ -399,28 +434,53 @@ public class GameHubController {
 
     private void playSparkTransition(Runnable onComplete) {
         GraphicsContext gc = transitionCanvas.getGraphicsContext2D();
+        double initW = getOverlayWidth();
+        double initH = getOverlayHeight();
+        gc.setFill(Color.rgb(0, 0, 10, 0.92));
+        gc.fillRect(0, 0, initW, initH);
+
         double[] frame = {0};
         Timeline spark = new Timeline();
         spark.setCycleCount(30);
         KeyFrame kf = new KeyFrame(Duration.millis(50), e -> {
             frame[0]++;
-            gc.clearRect(0, 0, 1000, 700);
+            double w = getOverlayWidth();
+            double h = getOverlayHeight();
+
+            gc.clearRect(0, 0, w, h);
             gc.setFill(Color.rgb(0, 0, 10, 0.92));
-            gc.fillRect(0, 0, 1000, 700);
-            double cx = 500, cy = 350, offset = Math.max(0, 200 - frame[0] * 14);
+            gc.fillRect(0, 0, w, h);
+
+            double cx = w / 2.0;
+            double cy = h / 2.0;
+            double offset = Math.max(0, 200 - frame[0] * 14);
+
             gc.setFill(Color.DODGERBLUE);
             gc.fillOval(cx - offset - 20, cy - 20, 40, 40);
             gc.setFill(Color.GOLD);
             gc.fillOval(cx + offset - 20, cy - 20, 40, 40);
+
             if (frame[0] > 14) {
+                gc.setStroke(Color.YELLOW);
+                gc.setLineWidth(2);
+                for (int i = 0; i < 20; i++) {
+                    double angle = random.nextDouble() * Math.PI * 2;
+                    double length = random.nextDouble() * 80 + 20;
+                    gc.strokeLine(cx, cy,
+                            cx + Math.cos(angle) * length,
+                            cy + Math.sin(angle) * length);
+                }
+
                 gc.setFill(Color.rgb(255, 255, 200, Math.max(0, 0.6 - frame[0] * 0.03)));
-                gc.fillRect(0, 0, 1000, 700);
+                gc.fillRect(0, 0, w, h);
             }
         });
         spark.getKeyFrames().add(kf);
         spark.setOnFinished(e -> {
+            double w = getOverlayWidth();
+            double h = getOverlayHeight();
             gc.setFill(Color.rgb(0, 0, 20));
-            gc.fillRect(0, 0, 1000, 700);
+            gc.fillRect(0, 0, w, h);
             fadeOutAndNavigate(onComplete);
         });
         spark.play();
@@ -428,21 +488,37 @@ public class GameHubController {
 
     private void playArcadeTransition(Runnable onComplete) {
         GraphicsContext gc = transitionCanvas.getGraphicsContext2D();
+        double w = getOverlayWidth();
+        double h = getOverlayHeight();
+
         gc.setFill(Color.rgb(0, 0, 0, 0.85));
-        gc.fillRect(0, 0, 1000, 700);
+        gc.fillRect(0, 0, w, h);
         transitionLabel.setText("INITIALIZING VELOCITY DRIVE...");
         transitionLabel.setVisible(true);
+
         PauseTransition msgPause = new PauseTransition(Duration.seconds(1.0));
         msgPause.setOnFinished(e -> {
             transitionLabel.setVisible(false);
-            double[] starX = {-50}, starY = {100 + random.nextInt(200)};
+            double curW = getOverlayWidth();
+            double curH = getOverlayHeight();
+
+            double[] starX = {-80};
+            double[] starY = {curH * 0.35 + random.nextInt(Math.max(1, (int)(curH * 0.3)))};
+            double speed = (curW + 160) / 30.0;
+
             Timeline starAnim = new Timeline();
             starAnim.setCycleCount(30);
             KeyFrame kf = new KeyFrame(Duration.millis(25), ev -> {
-                gc.clearRect(0, 0, 1000, 700);
+                double frameW = getOverlayWidth();
+                double frameH = getOverlayHeight();
+
+                gc.clearRect(0, 0, frameW, frameH);
                 gc.setFill(Color.rgb(0, 0, 0, 0.85));
-                gc.fillRect(0, 0, 1000, 700);
-                starX[0] += 40; starY[0] += 6;
+                gc.fillRect(0, 0, frameW, frameH);
+
+                starX[0] += speed;
+                starY[0] += 6;
+
                 gc.setStroke(Color.rgb(255, 255, 200, 0.6));
                 gc.setLineWidth(4);
                 gc.strokeLine(starX[0] - 120, starY[0] - 18, starX[0], starY[0]);
@@ -450,22 +526,25 @@ public class GameHubController {
                 gc.fillOval(starX[0] - 8, starY[0] - 8, 16, 16);
             });
             starAnim.getKeyFrames().add(kf);
-            starAnim.setOnFinished(ev -> fadeOutAndNavigate(onComplete));
+            starAnim.setOnFinished(ev -> {
+                double finW = getOverlayWidth();
+                double finH = getOverlayHeight();
+                gc.setFill(Color.rgb(10, 0, 0));
+                gc.fillRect(0, 0, finW, finH);
+                fadeOutAndNavigate(onComplete);
+            });
             starAnim.play();
         });
         msgPause.play();
     }
 
     private void fadeOutAndNavigate(Runnable onComplete) {
-        FadeTransition fade = new FadeTransition(Duration.millis(400), transitionOverlay);
-        fade.setFromValue(1);
-        fade.setToValue(0);
-        fade.setOnFinished(e -> {
-            transitionOverlay.setVisible(false);
-            transitionOverlay.setOpacity(1);
+        try {
             onComplete.run();
-        });
-        fade.play();
+        } finally {
+            transitionOverlay.setVisible(false);
+            transitionOverlay.setOpacity(1.0);
+        }
     }
 
     private void navigateTo(String fxmlFile) {
@@ -473,6 +552,10 @@ public class GameHubController {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlFile));
             Parent root = loader.load();
+            Object controller = loader.getController();
+            if (controller instanceof BattleController bc && currentPlayer != null) {
+                bc.setPlayer(currentPlayer);
+            }
             root.setOpacity(0);
             Stage stage = (Stage) storyCard.getScene().getWindow();
             SceneManager.switchScene(stage, root);

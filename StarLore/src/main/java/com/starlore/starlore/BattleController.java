@@ -69,14 +69,10 @@ public class BattleController {
         // Push Medusa down so she isn't floating
         medusaSprite.setLayoutY(360.0); // Increase this number to push her lower, decrease to raise her
         startIdles();
-        // Start battle with Medusa attacking first spontaneously
-        /*PauseTransition introDelay = new PauseTransition(Duration.seconds(1.5));
-        introDelay.setOnFinished(e -> {
-            battleTextLabel.setText("Medusa coming to attack!");
-            disableMenu();
-            enemyTurn();
-        });
-        introDelay.play();*/
+    }
+
+    public void setPlayer(Player player) {
+        this.currentPlayer = player;
     }
 
     private void startIdles() {
@@ -314,7 +310,12 @@ public class BattleController {
     @FXML
     void returnToHub(ActionEvent event) {
         try {
-            Parent root = FXMLLoader.load(getClass().getResource("GameHubView.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("GameHubView.fxml"));
+            Parent root = loader.load();
+            GameHubController controller = loader.getController();
+            if (currentPlayer != null) {
+                controller.setPlayer(currentPlayer);
+            }
             Stage stage = (Stage) backButton.getScene().getWindow();
             SceneManager.switchScene(stage, root);
         } catch (Exception e) {

@@ -5,78 +5,154 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<StackPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="700.0" prefWidth="1000.0" style="-fx-background-color: linear-gradient(to bottom, #050816, #0a0a2e, #000000);" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.starlore.starlore.DuelController">
+<StackPane fx:id="rootStackPane" prefHeight="700.0" prefWidth="1000.0" style="-fx-background-color: #010826;" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.starlore.starlore.DuelController">
    <children>
-      <BorderPane prefHeight="200.0" prefWidth="200.0">
-         <top>
-            <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" style="-fx-padding: 16 24 12 24;" BorderPane.alignment="CENTER">
+      <!-- LAYER 1: Interactive Celestial Atlas Map -->
+      <StackPane fx:id="mapOverlay">
+         <children>
+            <Canvas fx:id="mapCanvas" height="700.0" width="1000.0" />
+
+            <!-- Top HUD Bar (Styled after user reference image) -->
+            <VBox alignment="TOP_CENTER" pickOnBounds="false">
                <children>
-                  <VBox alignment="CENTER_LEFT" prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
+                  <HBox alignment="CENTER" spacing="12.0" style="-fx-padding: 16 24 10 24;" pickOnBounds="false">
                      <children>
-                        <Label style="-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #afc9ff;" text="👤 YOU" />
-                        <Label fx:id="playerScoreLabel" style="-fx-font-size: 22;-fx-font-weight: bold; -fx-text-fill: white;" text="Score: 0" />
+                        <!-- Level Badge -->
+                        <HBox alignment="CENTER" spacing="8.0" style="-fx-background-color: rgba(6, 25, 90, 0.85); -fx-background-radius: 20; -fx-padding: 6 16; -fx-border-color: #38bdf8; -fx-border-radius: 20; -fx-border-width: 1.5;">
+                           <children>
+                              <Label text="★ 1" style="-fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #38bdf8;" />
+                              <Label text="0/120" style="-fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-text-fill: #94a3b8;" />
+                           </children>
+                        </HBox>
+
+                        <Region HBox.hgrow="ALWAYS" />
+
+                        <!-- Astral Energy Bar -->
+                        <HBox alignment="CENTER" spacing="6.0" style="-fx-background-color: rgba(234, 88, 12, 0.85); -fx-background-radius: 20; -fx-padding: 6 16; -fx-border-color: #f59e0b; -fx-border-radius: 20; -fx-border-width: 1.5;">
+                           <children>
+                              <Label text="⚡" style="-fx-font-size: 14px;" />
+                              <Label text="100/100" style="-fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 13px; -fx-text-fill: white;" />
+                           </children>
+                        </HBox>
+
+                        <!-- Stardust / Gems -->
+                        <HBox alignment="CENTER" spacing="6.0" style="-fx-background-color: rgba(109, 40, 217, 0.85); -fx-background-radius: 20; -fx-padding: 6 16; -fx-border-color: #c084fc; -fx-border-radius: 20; -fx-border-width: 1.5;">
+                           <children>
+                              <Label text="✦" style="-fx-font-size: 14px; -fx-text-fill: #fcd34d;" />
+                              <Label fx:id="dustHudLabel" text="0 DUST" style="-fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 13px; -fx-text-fill: white;" />
+                           </children>
+                        </HBox>
+
+                        <Region HBox.hgrow="ALWAYS" />
+
+                        <!-- Compass Re-center Button -->
+                        <Button fx:id="compassBtn" onAction="#recenterOnSelected" text="🧭" style="-fx-background-color: rgba(14, 165, 233, 0.8); -fx-text-fill: white; -fx-font-size: 16px; -fx-background-radius: 20; -fx-cursor: hand; -fx-min-width: 40; -fx-min-height: 40;" />
+
+                        <!-- Back to Hub Button -->
+                        <Button fx:id="hubBtn" onAction="#backToHub" text="🏠 Hub" style="-fx-background-color: rgba(15, 23, 42, 0.85); -fx-text-fill: #38bdf8; -fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 12px; -fx-padding: 8 16; -fx-background-radius: 20; -fx-border-color: #38bdf8; -fx-border-radius: 20; -fx-cursor: hand;" />
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+
+            <!-- Bottom Floating Constellation Action Card (Styled like modern game modal) -->
+            <VBox alignment="BOTTOM_CENTER" spacing="10.0" style="-fx-padding: 0 0 20 0;" pickOnBounds="false">
+               <children>
+                  <VBox alignment="CENTER" maxWidth="520.0" spacing="12.0" style="-fx-background-color: rgba(3, 11, 46, 0.92); -fx-background-radius: 24; -fx-border-color: #38bdf8; -fx-border-radius: 24; -fx-border-width: 1.8; -fx-padding: 16 28; -fx-effect: dropshadow(gaussian, rgba(56, 189, 248, 0.4), 22, 0.3, 0, 4);">
+                     <children>
+                        <HBox alignment="CENTER" spacing="10.0">
+                           <children>
+                              <Label fx:id="constellationTitleLabel" text="✦ ARIES — THE RAM ✦" style="-fx-font-family: 'Verdana'; -fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #ffd65a;" />
+                              <Label fx:id="constellationStatusBadge" text="🌑 DORMANT" style="-fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #94a3b8; -fx-background-color: rgba(148, 163, 184, 0.2); -fx-padding: 3 10; -fx-background-radius: 10;" />
+                           </children>
+                        </HBox>
+
+                        <Label fx:id="constellationDescLabel" text="Connect the stars to awaken this celestial constellation." style="-fx-font-family: 'Verdana'; -fx-font-size: 12px; -fx-text-fill: #cbd5e1; -fx-wrap-text: true; -fx-text-alignment: center;" />
+
+                        <HBox alignment="CENTER" spacing="16.0">
+                           <children>
+                              <Button fx:id="friendsModeBtn" onAction="#startFriendsMode" text="👥 Play with Friends" style="-fx-background-color: linear-gradient(to right, #0284c7, #0369a1); -fx-text-fill: white; -fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 13px; -fx-padding: 10 22; -fx-background-radius: 20; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(2, 132, 199, 0.4), 10, 0, 0, 2);" />
+                              <Button fx:id="aiModeBtn" onAction="#startAiMode" text="🤖 Play with AI" style="-fx-background-color: linear-gradient(to right, #7c3aed, #6d28d9); -fx-text-fill: white; -fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 13px; -fx-padding: 10 24; -fx-background-radius: 20; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(124, 58, 237, 0.5), 10, 0, 0, 2);" />
+                           </children>
+                        </HBox>
+
+                        <Label text="Drag map in any direction to explore the night sky" style="-fx-font-family: 'Verdana'; -fx-font-size: 10px; -fx-text-fill: #64748b;" />
                      </children>
                   </VBox>
-                  <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
+               </children>
+            </VBox>
+         </children>
+      </StackPane>
+
+      <!-- LAYER 2: Constellation Duel Gameplay -->
+      <BorderPane fx:id="gamePane" visible="false" style="-fx-background-color: #030820;">
+         <top>
+            <HBox alignment="CENTER" style="-fx-padding: 16 24 12 24;">
+               <children>
+                  <VBox alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
                      <children>
-                        <Label fx:id="constellationNameLabel" style="-fx-font-size: 18; -fx-text-fill: #f0d060;                                               -fx-font-weight: bold;" text="?" />
-                        <Label fx:id="timerLabel" style="-fx-font-size: 28; -fx-font-weight: bold;                                               -fx-text-fill: white;" text="⏱ 0:30" />
+                        <Label fx:id="player1TagLabel" text="✦ YOU" style="-fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #56c7ff;" />
+                        <Label fx:id="playerScoreLabel" text="Score: 0" style="-fx-font-family: 'Verdana'; -fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: white;" />
                      </children>
                   </VBox>
-                  <VBox alignment="CENTER_RIGHT" prefHeight="200.0" prefWidth="100.0" HBox.hgrow="ALWAYS">
+                  <VBox alignment="CENTER" HBox.hgrow="ALWAYS">
                      <children>
-                        <Label style="-fx-font-size: 16; -fx-font-weight: bold;                                               -fx-text-fill: #ffaaaa;" text="🤖 AI" />
-                        <Label fx:id="aiScoreLabel" style="-fx-font-size: 22; -fx-font-weight: bold;                                               -fx-text-fill: white;" text="Score: 0" />
+                        <Label fx:id="duelConstellationNameLabel" text="✦ ARIES" style="-fx-font-family: 'Verdana'; -fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #ffd65a;" />
+                        <Label fx:id="timerLabel" text="⏱ 0:30" style="-fx-font-family: 'Verdana'; -fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: white;" />
+                        <Label fx:id="turnIndicatorLabel" text="Click 2 stars to connect a link" style="-fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-text-fill: #94a3b8;" />
+                     </children>
+                  </VBox>
+                  <VBox fx:id="opponentHeader" alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
+                     <children>
+                        <Label fx:id="opponentTagLabel" text="✦ AI" style="-fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #ff7e6b;" />
+                        <Label fx:id="aiScoreLabel" text="Score: 0" style="-fx-font-family: 'Verdana'; -fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: white;" />
                      </children>
                   </VBox>
                </children>
             </HBox>
          </top>
          <center>
-            <HBox prefHeight="100.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+            <HBox alignment="CENTER">
                <children>
-                  <StackPane prefHeight="150.0" prefWidth="200.0" style="-fx-background-color: transparent;" HBox.hgrow="ALWAYS">
+                  <StackPane alignment="CENTER" HBox.hgrow="ALWAYS">
                      <children>
-                        <Canvas fx:id="playerCanvas" height="580.0" width="490.0" />
+                        <Canvas fx:id="playerCanvas" height="560.0" width="480.0" />
                      </children>
                   </StackPane>
-                  <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" style="-fx-background-color: #2a2a5a;-fx-min-width: 2; -fx-max-width: 2;">
+                  <VBox fx:id="versusDivider" style="-fx-background-color: #25336b; -fx-min-width: 2; -fx-max-width: 2;" />
+                  <StackPane fx:id="opponentBoard" alignment="CENTER" HBox.hgrow="ALWAYS">
                      <children>
-                        <Label style="-fx-font-size: 16; -fx-font-weight: bold;                                               -fx-text-fill: #afc9ff;                                               -fx-rotate: 90;" text="VS" />
-                     </children>
-                  </VBox>
-                  <StackPane prefHeight="150.0" prefWidth="200.0" HBox.hgrow="ALWAYS">
-                     <children>
-                        <Canvas fx:id="aiCanvas" height="580.0" width="490.0" />
+                        <Canvas fx:id="aiCanvas" height="560.0" width="480.0" />
                      </children>
                   </StackPane>
                </children>
             </HBox>
          </center>
-      </BorderPane>
-      <StackPane fx:id="countdownOverlay" prefHeight="150.0" prefWidth="200.0" style="-fx-background-color: rgba(0,0,0,0.85);">
-         <children>
-            <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" spacing="20">
+         <bottom>
+            <HBox alignment="CENTER" style="-fx-padding: 8 0 12 0;">
                <children>
-                  <Label fx:id="constellationRevealLabel" style="-fx-font-size: 28; -fx-text-fill: #f0d060;                                       -fx-font-weight: bold;" text="Connect: ORION" />
-                  <Label fx:id="countdownLabel" style="-fx-font-size: 120; -fx-font-weight: bold;                                       -fx-text-fill: white;" text="3" />
+                  <Button onAction="#returnToMap" text="✦ Abandon &amp; Return to Map" style="-fx-background-color: rgba(30, 41, 59, 0.8); -fx-text-fill: #94a3b8; -fx-font-family: 'Verdana'; -fx-font-size: 12px; -fx-padding: 6 18; -fx-background-radius: 15; -fx-cursor: hand;" />
                </children>
-            </VBox>
-         </children>
-      </StackPane>
-      <StackPane fx:id="resultOverlay" prefHeight="150.0" prefWidth="200.0" style="-fx-background-color: rgba(0,0,0,0.88);" visible="false">
+            </HBox>
+         </bottom>
+      </BorderPane>
+
+      <!-- LAYER 3: Result Overlay -->
+      <StackPane fx:id="resultOverlay" visible="false" style="-fx-background-color: rgba(0, 0, 0, 0.88);">
          <children>
-            <VBox alignment="CENTER" prefHeight="200.0" prefWidth="100.0" spacing="28.0">
+            <VBox alignment="CENTER" spacing="22.0">
                <children>
-                  <Label fx:id="resultLabel" style="-fx-font-size: 52; -fx-font-weight: bold;                                       -fx-text-fill: white;" text="⚔ YOU WIN!" />
-                  <Label fx:id="resultScoreLabel" style="-fx-font-size: 20; -fx-text-fill: #afc9ff;" text="Your Score: 0 — AI Score: 0" />
-                  <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="24.0">
+                  <Label fx:id="resultLabel" text="✦ CONSTELLATION ENLIGHTENED! ✦" style="-fx-font-family: 'Verdana'; -fx-font-size: 40px; -fx-font-weight: bold; -fx-text-fill: #ffd65a; -fx-effect: dropshadow(gaussian, #f59e0b, 20, 0.5, 0, 0);" />
+                  <Label fx:id="resultScoreLabel" text="You illuminated all stars and earned +50 Star Dust!" style="-fx-font-family: 'Verdana'; -fx-font-size: 18px; -fx-text-fill: #b8d9ff;" />
+                  <HBox alignment="CENTER" spacing="20.0">
                      <children>
-                        <Button fx:id="rematchBtn" mnemonicParsing="false" onAction="#rematch" style="-fx-background-color: #0a1a6e; -fx-text-fill: white;                                                -fx-font-size: 16;                                                -fx-padding: 12 32;                                                -fx-background-radius: 8;                                                -fx-cursor: hand;" text="⚔ Rematch" />
-                        <Button fx:id="backBtn" mnemonicParsing="false" onAction="#backToHub" style="-fx-background-color: #2a2a5a;                                                -fx-text-fill: white;                                                -fx-font-size: 16;                                                -fx-padding: 12 32;                                                -fx-background-radius: 8;                                                -fx-cursor: hand;" text="🏠 Back to Hub" />
+                        <Button onAction="#rematch" text="↻ Rematch" style="-fx-background-color: #0284c7; -fx-text-fill: white; -fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10 24; -fx-background-radius: 18; -fx-cursor: hand;" />
+                        <Button onAction="#returnToMap" text="✦ Star Map" style="-fx-background-color: #7c3aed; -fx-text-fill: white; -fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10 24; -fx-background-radius: 18; -fx-cursor: hand;" />
+                        <Button onAction="#backToHub" text="🏠 Back to Hub" style="-fx-background-color: #1e293b; -fx-text-fill: white; -fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10 24; -fx-background-radius: 18; -fx-cursor: hand;" />
                      </children>
                   </HBox>
                </children>

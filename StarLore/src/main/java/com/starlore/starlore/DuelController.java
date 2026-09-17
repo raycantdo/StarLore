@@ -1,538 +1,1103 @@
 package com.starlore.starlore;
 
-import javafx.animation.*;
+import javafx.animation.AnimationTimer;
+import javafx.animation.KeyFrame;
+import javafx.animation.PauseTransition;
+import javafx.animation.Timeline;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.CycleMethod;
+import javafx.scene.paint.LinearGradient;
+import javafx.scene.paint.RadialGradient;
+import javafx.scene.paint.Stop;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
+/**
+ * DuelController manages:
+ * 1. The interactive celestial star atlas map matching the real night sky, with 4-way scrolling,
+ *    dark unlit constellations, enlightened constellations, and yellow pointer indicator.
+ * 2. Play with AI mode (race against the AI).
+ * 3. Play with Friends mode (turn-based 2-player local pass-and-play).
+ */
 public class DuelController {
 
-    @FXML private Canvas playerCanvas;
-    @FXML private Canvas aiCanvas;
+    // ─── FXML Map Overlay Elements ──────────────────────────────
+    @FXML private StackPane rootStackPane;
+    @FXML private StackPane mapOverlay;
+    @FXML private Canvas mapCanvas;
+    @FXML private Label dustHudLabel;
+    @FXML private Button compassBtn;
+    @FXML private Button hubBtn;
+    @FXML private Label constellationTitleLabel;
+    @FXML private Label constellationStatusBadge;
+    @FXML private Label constellationDescLabel;
+    @FXML private Button friendsModeBtn;
+    @FXML private Button aiModeBtn;
+
+    // ─── FXML Duel Game Elements ────────────────────────────────
+    @FXML private BorderPane gamePane;
+    @FXML private Label player1TagLabel;
     @FXML private Label playerScoreLabel;
-    @FXML private Label aiScoreLabel;
+    @FXML private Label duelConstellationNameLabel;
     @FXML private Label timerLabel;
-    @FXML private Label countdownLabel;
-    @FXML private Label constellationNameLabel;
-    @FXML private Label constellationRevealLabel;
+    @FXML private Label turnIndicatorLabel;
+    @FXML private VBox opponentHeader;
+    @FXML private Label opponentTagLabel;
+    @FXML private Label aiScoreLabel;
+    @FXML private Canvas playerCanvas;
+    @FXML private VBox versusDivider;
+    @FXML private StackPane opponentBoard;
+    @FXML private Canvas aiCanvas;
+
+    // ─── FXML Result Overlay Elements ───────────────────────────
+    @FXML private StackPane resultOverlay;
     @FXML private Label resultLabel;
     @FXML private Label resultScoreLabel;
-    @FXML private StackPane countdownOverlay;
-    @FXML private StackPane resultOverlay;
 
     private Player currentPlayer;
-    private Random random = new Random();
+    private final PlayerDAO playerDAO = new PlayerDAO();
 
-    // Game State
-    private int playerScore = 0;
-    private int aiScore = 0;
+    // ─── Map Geometry & State ───────────────────────────────────
+    private static final double WORLD_W = 2500.0;
+    private static final double WORLD_H = 1800.0;
+    private double mapX = -700.0;
+    private double mapY = -420.0;
+    private double dragStartX, dragStartY;
+    private boolean isDragging = false;
+    private double animTime = 0.0;
+    private AnimationTimer mapAnimTimer;
+
+    // Stable background star field (750 stars)
+    private static final int NUM_BG_STARS = 750;
+    private final double[] bgStarX = new double[NUM_BG_STARS];
+    private final double[] bgStarY = new double[NUM_BG_STARS];
+    private final double[] bgStarR = new double[NUM_BG_STARS];
+    private final double[] bgStarTwinkle = new double[NUM_BG_STARS];
+
+    // Constellation definitions
+    public static class ConstellationDef {
+        public final String name;
+        public final String title;
+        public final String desc;
+        public final double cx, cy;
+        public final double[][] stars;   // relative coordinates to (cx, cy)
+        public final int[][] links;      // star index pairs
+        public final double[][] boundary; // polygon relative vertices
+
+        public final double minStarX, maxStarX, minStarY, maxStarY;
+
+        public ConstellationDef(String name, String title, String desc, double cx, double cy,
+                                double[][] stars, int[][] links, double[][] boundary) {
+            this.name = name;
+            this.title = title;
+            this.desc = desc;
+            this.cx = cx;
+            this.cy = cy;
+            this.stars = stars;
+            this.links = links;
+            this.boundary = boundary;
+
+            double minX = Double.MAX_VALUE, maxX = -Double.MAX_VALUE;
+            double minY = Double.MAX_VALUE, maxY = -Double.MAX_VALUE;
+            for (double[] s : stars) {
+                if (s[0] < minX) minX = s[0];
+                if (s[0] > maxX) maxX = s[0];
+                if (s[1] < minY) minY = s[1];
+                if (s[1] > maxY) maxY = s[1];
+            }
+            this.minStarX = minX;
+            this.maxStarX = maxX;
+            this.minStarY = minY;
+            this.maxStarY = maxY;
+        }
+    }
+
+    private final List<ConstellationDef> constellations = new ArrayList<>();
+    private ConstellationDef selectedDef;
+    private ConstellationDef currentDuelDef;
+
+    // ─── Game Loop & Duel State ─────────────────────────────────
+    private boolean isFriendMode = false;
+    private boolean isPlayer1Turn = true;
+    private boolean duelActive = false;
+    private int selectedStarIdx = -1;
+    private int player1Score = 0;
+    private int player2OrAiScore = 0;
     private int timeLeft = 30;
-    private boolean gameActive = false;
 
-    // Constellation Data
-    private List<double[]> stars = new ArrayList<>();
-    private List<int[]> connections = new ArrayList<>();
-    private List<Integer> playerConnected = new ArrayList<>();
-    private List<Integer> aiConnected = new ArrayList<>();
-    private int lastPlayerStar = -1;
-    private int lastAiStar = -1;
-    private String currentConstellationName = "";
+    private final List<int[]> p1Links = new ArrayList<>();
+    private final List<int[]> p2OrAiLinks = new ArrayList<>();
+    private final Map<int[], Color> friendLinkColors = new HashMap<>();
 
-    // Timelines
-    private Timeline gameTimer;
-    private Timeline aiTimeline;
+    private Timeline duelTimer;
+    private Timeline aiTimer;
+    private final Random random = new Random();
 
-    // Constellations Database
-    private String[][] constellationData = {
-            {"ORION"},
-            {"CASSIOPEIA"},
-            {"URSA MAJOR"},
-            {"SCORPIUS"},
-            {"LEO"}
-    };
-
-    // ─── Initialization ───────────────────────────────────────
+    // ─── Initialization ─────────────────────────────────────────
 
     @FXML
     public void initialize() {
-        playerCanvas.setOnMouseClicked(this::handlePlayerClick);
-        startCountdown();
+        initStarfield();
+        initConstellations();
+
+        // Default selected: Aries (as highlighted in user's reference image!)
+        selectedDef = findConstellation("ARIES");
+        recenterOnSelected();
+
+        setupMapInteractions();
+        setupCanvasBinding();
+        startMapAnimation();
+        updateSelectionCard();
     }
 
     public void setPlayer(Player player) {
         this.currentPlayer = player;
+        updateHud();
+        updateSelectionCard();
+        drawMap();
     }
 
-    // ─── Countdown ────────────────────────────────────────────
+    private void updateHud() {
+        if (dustHudLabel != null) {
+            int dust = (currentPlayer != null) ? currentPlayer.getTotalStarDust() : 0;
+            dustHudLabel.setText(dust + " DUST");
+        }
+    }
 
-    private void startCountdown() {
-        generateConstellation();
-        constellationRevealLabel.setText("Connect: " + currentConstellationName);
+    private void setupCanvasBinding() {
+        if (rootStackPane != null && mapCanvas != null) {
+            mapCanvas.widthProperty().bind(rootStackPane.widthProperty());
+            mapCanvas.heightProperty().bind(rootStackPane.heightProperty());
+            mapCanvas.widthProperty().addListener((obs, o, n) -> drawMap());
+            mapCanvas.heightProperty().addListener((obs, o, n) -> drawMap());
+        }
+        if (playerCanvas != null) {
+            playerCanvas.setOnMouseClicked(this::onPlayerCanvasClick);
+        }
+    }
 
-        int[] count = {3};
-        countdownLabel.setText(String.valueOf(count[0]));
+    private void initStarfield() {
+        Random rnd = new Random(42); // fixed seed for stable layout
+        for (int i = 0; i < NUM_BG_STARS; i++) {
+            bgStarX[i] = rnd.nextDouble() * WORLD_W;
+            bgStarY[i] = rnd.nextDouble() * WORLD_H;
+            bgStarR[i] = (i % 25 == 0) ? 2.8 : (i % 8 == 0) ? 1.8 : 1.0;
+            bgStarTwinkle[i] = rnd.nextDouble() * Math.PI * 2;
+        }
+    }
 
-        // Animate countdown number
-        animateCountdownNumber();
+    private void initConstellations() {
+        constellations.clear();
 
-        Timeline countdown = new Timeline();
-        countdown.setCycleCount(3);
-        KeyFrame kf = new KeyFrame(Duration.seconds(1), e -> {
-            count[0]--;
-            if (count[0] > 0) {
-                countdownLabel.setText(String.valueOf(count[0]));
-                animateCountdownNumber();
-            } else {
-                countdownLabel.setText("GO!");
-                countdownLabel.setStyle(
-                        "-fx-font-size: 100; -fx-font-weight: bold; -fx-text-fill: #00ff88;");
+        // 1. ARIES (Center - Golden Ram)
+        constellations.add(new ConstellationDef(
+                "ARIES", "THE RAM",
+                "The golden-fleeced ram of celestial myth that carried Phrixus to Colchis.",
+                1200, 780,
+                new double[][]{{-40, -15}, {0, 10}, {40, -5}, {85, 30}},
+                new int[][]{{0, 1}, {1, 2}, {2, 3}},
+                new double[][]{{-130, -90}, {140, -90}, {140, 95}, {-130, 95}}
+        ));
+
+        // 2. TAURUS (The Bull - Left of Aries)
+        constellations.add(new ConstellationDef(
+                "TAURUS", "THE BULL",
+                "The great celestial bull confronting Orion with the blazing eye of Aldebaran.",
+                840, 840,
+                new double[][]{{-45, -50}, {-10, -10}, {45, 10}, {80, 50}, {-20, 40}, {20, 60}},
+                new int[][]{{0, 1}, {1, 2}, {2, 3}, {1, 4}, {4, 5}},
+                new double[][]{{-130, -95}, {130, -95}, {130, 105}, {-130, 105}}
+        ));
+
+        // 3. ORION (The Hunter - Far left)
+        constellations.add(new ConstellationDef(
+                "ORION", "THE HUNTER",
+                "The titan hunter bearing the belt of Alnitak, Alnilam, Mintaka and bright Rigel.",
+                460, 960,
+                new double[][]{{-40, -90}, {40, -90}, {-25, 0}, {0, 0}, {25, 0}, {-45, 95}, {45, 95}},
+                new int[][]{{0, 2}, {1, 4}, {2, 3}, {3, 4}, {2, 5}, {4, 6}},
+                new double[][]{{-120, -130}, {120, -130}, {120, 135}, {-120, 135}}
+        ));
+
+        // 4. PERSEUS (Above Aries)
+        constellations.add(new ConstellationDef(
+                "PERSEUS", "THE HERO",
+                "The brave slayer of Medusa and rescuer of Andromeda, armed with the Harpe blade.",
+                1150, 460,
+                new double[][]{{-20, -70}, {25, -40}, {0, 0}, {-45, 45}, {40, 50}, {0, 80}},
+                new int[][]{{0, 1}, {1, 2}, {2, 3}, {2, 4}, {4, 5}},
+                new double[][]{{-125, -100}, {125, -100}, {125, 110}, {-125, 110}}
+        ));
+
+        // 5. CASSIOPEIA (Top - Queen)
+        constellations.add(new ConstellationDef(
+                "CASSIOPEIA", "THE QUEEN",
+                "The proud Queen of Ethiopia seated upon her iconic celestial W-throne.",
+                1460, 240,
+                new double[][]{{-70, 30}, {-35, -30}, {0, 20}, {35, -30}, {70, 25}},
+                new int[][]{{0, 1}, {1, 2}, {2, 3}, {3, 4}},
+                new double[][]{{-120, -85}, {120, -85}, {120, 90}, {-120, 90}}
+        ));
+
+        // 6. TRIANGULUM (Between Perseus and Aries)
+        constellations.add(new ConstellationDef(
+                "TRIANGULUM", "THE TRIANGLE",
+                "A pristine geometric trinity celebrated by Ptolemy and ancient stargazers.",
+                1400, 580,
+                new double[][]{{-40, 25}, {40, 25}, {0, -35}},
+                new int[][]{{0, 1}, {1, 2}, {2, 0}},
+                new double[][]{{-95, -75}, {95, -75}, {95, 80}, {-95, 80}}
+        ));
+
+        // 7. ANDROMEDA (Upper right)
+        constellations.add(new ConstellationDef(
+                "ANDROMEDA", "THE MAIDEN",
+                "The chained princess of the night sky, home to the great spiral galaxy.",
+                1780, 430,
+                new double[][]{{-60, -40}, {-15, -10}, {35, 20}, {75, 50}, {-20, 45}},
+                new int[][]{{0, 1}, {1, 2}, {2, 3}, {1, 4}},
+                new double[][]{{-130, -90}, {130, -90}, {130, 95}, {-130, 95}}
+        ));
+
+        // 8. PISCES (Right of Aries)
+        constellations.add(new ConstellationDef(
+                "PISCES", "THE FISHES",
+                "Two mythical fishes bound together by starry celestial ribbons.",
+                1680, 780,
+                new double[][]{{-50, 45}, {0, 25}, {50, 45}, {35, -35}, {-35, -35}},
+                new int[][]{{0, 1}, {1, 2}, {2, 3}, {3, 4}},
+                new double[][]{{-130, -95}, {130, -95}, {130, 95}, {-130, 95}}
+        ));
+
+        // 9. CETUS (Lower right - Sea Monster)
+        constellations.add(new ConstellationDef(
+                "CETUS", "THE SEA MONSTER",
+                "The leviathan of the deep celestial ocean with the pulsating beacon of Mira.",
+                1600, 1120,
+                new double[][]{{-70, -30}, {-30, -45}, {20, -20}, {65, 10}, {30, 50}, {-20, 40}, {-60, 20}},
+                new int[][]{{0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 5}, {5, 6}, {6, 0}},
+                new double[][]{{-135, -100}, {135, -100}, {135, 105}, {-135, 105}}
+        ));
+
+        // 10. ERIDANUS (River - Lower center)
+        constellations.add(new ConstellationDef(
+                "ERIDANUS", "THE RIVER",
+                "The winding celestial river that flows past Orion down to radiant Achernar.",
+                1100, 1200,
+                new double[][]{{-60, -70}, {-25, -35}, {15, -10}, {-20, 30}, {25, 65}, {70, 90}},
+                new int[][]{{0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 5}},
+                new double[][]{{-130, -105}, {130, -105}, {130, 115}, {-130, 115}}
+        ));
+
+        // 11. LEPUS (Below Orion)
+        constellations.add(new ConstellationDef(
+                "LEPUS", "THE HARE",
+                "The nimble celestial hare darting quietly across the southern sky.",
+                480, 1260,
+                new double[][]{{-40, -20}, {10, -35}, {45, 0}, {15, 35}, {-35, 25}},
+                new int[][]{{0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 0}},
+                new double[][]{{-110, -85}, {110, -85}, {110, 85}, {-110, 85}}
+        ));
+
+        // 12. URSA MAJOR (Upper left - Great Bear)
+        constellations.add(new ConstellationDef(
+                "URSA MAJOR", "THE GREAT BEAR",
+                "The iconic Big Dipper guiding navigators toward the North Pole Star.",
+                440, 350,
+                new double[][]{{-65, 20}, {-25, 10}, {15, 20}, {50, 35}, {65, 80}, {25, 95}, {-15, 80}},
+                new int[][]{{0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 5}, {5, 6}, {6, 2}},
+                new double[][]{{-130, -95}, {130, -95}, {130, 120}, {-130, 120}}
+        ));
+
+        // 13. LEO (The Lion - Far right)
+        constellations.add(new ConstellationDef(
+                "LEO", "THE LION",
+                "The majestic Nemean Lion crowned with the radiant king star Regulus.",
+                2080, 960,
+                new double[][]{{-50, 20}, {-10, -20}, {30, 0}, {55, 45}, {20, 80}, {-40, 70}},
+                new int[][]{{0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 5}, {5, 0}, {1, 3}},
+                new double[][]{{-130, -95}, {130, -95}, {130, 110}, {-130, 110}}
+        ));
+
+        // 14. SCORPIUS (Bottom right)
+        constellations.add(new ConstellationDef(
+                "SCORPIUS", "THE SCORPION",
+                "The fierce arachnid armed with a stinger and the beating crimson heart of Antares.",
+                1950, 1440,
+                new double[][]{{-40, -80}, {0, -60}, {-20, -20}, {0, 20}, {30, 50}, {10, 85}, {-20, 110}, {-50, 130}},
+                new int[][]{{0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 5}, {5, 6}, {6, 7}},
+                new double[][]{{-120, -110}, {120, -110}, {120, 150}, {-120, 150}}
+        ));
+    }
+
+    private ConstellationDef findConstellation(String name) {
+        for (ConstellationDef c : constellations) {
+            if (c.name.equalsIgnoreCase(name)) return c;
+        }
+        return constellations.get(0);
+    }
+
+    // ─── 4-Way Panning & Mouse Handling ─────────────────────────
+
+    private void setupMapInteractions() {
+        mapCanvas.setOnMousePressed(e -> {
+            dragStartX = e.getX();
+            dragStartY = e.getY();
+            isDragging = false;
+        });
+
+        mapCanvas.setOnMouseDragged(e -> {
+            double dx = e.getX() - dragStartX;
+            double dy = e.getY() - dragStartY;
+            if (Math.abs(dx) + Math.abs(dy) > 4) {
+                isDragging = true;
+            }
+            double viewW = mapCanvas.getWidth() > 0 ? mapCanvas.getWidth() : 1000;
+            double viewH = mapCanvas.getHeight() > 0 ? mapCanvas.getHeight() : 700;
+            mapX = clamp(mapX + dx, viewW - WORLD_W, 0);
+            mapY = clamp(mapY + dy, viewH - WORLD_H, 0);
+            dragStartX = e.getX();
+            dragStartY = e.getY();
+            drawMap();
+        });
+
+        mapCanvas.setOnMouseReleased(e -> {
+            if (!isDragging) {
+                handleMapClick(e.getX(), e.getY());
             }
         });
-        countdown.getKeyFrames().add(kf);
-        countdown.setOnFinished(e -> {
-            PauseTransition pause = new PauseTransition(Duration.millis(600));
-            pause.setOnFinished(ev -> {
-                countdownOverlay.setVisible(false);
-                constellationNameLabel.setText("🌟 " + currentConstellationName);
-                startGame();
-            });
-            pause.play();
-        });
-        countdown.play();
     }
 
-    private void animateCountdownNumber() {
-        ScaleTransition scale = new ScaleTransition(Duration.millis(800), countdownLabel);
-        scale.setFromX(1.5);
-        scale.setFromY(1.5);
-        scale.setToX(1.0);
-        scale.setToY(1.0);
-        scale.play();
+    private double clamp(double val, double min, double max) {
+        return Math.max(min, Math.min(max, val));
     }
 
-    // ─── Constellation Generation ─────────────────────────────
+    private void handleMapClick(double sx, double sy) {
+        double worldX = sx - mapX;
+        double worldY = sy - mapY;
 
-    private void generateConstellation() {
-        stars.clear();
-        connections.clear();
-        playerConnected.clear();
-        aiConnected.clear();
-        lastPlayerStar = -1;
-        lastAiStar = -1;
+        ConstellationDef closest = null;
+        double minDstSq = Double.MAX_VALUE;
 
-        // Pick random constellation
-        int index = random.nextInt(constellationData.length);
-        currentConstellationName = constellationData[index][0];
-
-        // Generate stars based on constellation
-        switch (currentConstellationName) {
-            case "ORION":
-                // Orion — 7 main stars
-                stars.add(new double[]{245, 80});   // 0 — Betelgeuse
-                stars.add(new double[]{245, 160});  // 1 — Bellatrix area
-                stars.add(new double[]{200, 220});  // 2 — Belt left
-                stars.add(new double[]{245, 230});  // 3 — Belt center
-                stars.add(new double[]{290, 220});  // 4 — Belt right
-                stars.add(new double[]{200, 320});  // 5 — Rigel area
-                stars.add(new double[]{290, 320});  // 6 — Saiph area
-                connections.add(new int[]{0, 1});
-                connections.add(new int[]{1, 2});
-                connections.add(new int[]{2, 3});
-                connections.add(new int[]{3, 4});
-                connections.add(new int[]{4, 1});
-                connections.add(new int[]{2, 5});
-                connections.add(new int[]{4, 6});
-                break;
-
-            case "CASSIOPEIA":
-                // W shape — 5 stars
-                stars.add(new double[]{160, 200}); // 0
-                stars.add(new double[]{205, 150}); // 1
-                stars.add(new double[]{245, 200}); // 2
-                stars.add(new double[]{285, 150}); // 3
-                stars.add(new double[]{330, 200}); // 4
-                connections.add(new int[]{0, 1});
-                connections.add(new int[]{1, 2});
-                connections.add(new int[]{2, 3});
-                connections.add(new int[]{3, 4});
-                break;
-
-            case "URSA MAJOR":
-                // Big Dipper — 7 stars
-                stars.add(new double[]{150, 180}); // 0
-                stars.add(new double[]{200, 160}); // 1
-                stars.add(new double[]{250, 170}); // 2
-                stars.add(new double[]{300, 180}); // 3
-                stars.add(new double[]{320, 240}); // 4
-                stars.add(new double[]{270, 260}); // 5
-                stars.add(new double[]{220, 250}); // 6
-                connections.add(new int[]{0, 1});
-                connections.add(new int[]{1, 2});
-                connections.add(new int[]{2, 3});
-                connections.add(new int[]{3, 4});
-                connections.add(new int[]{4, 5});
-                connections.add(new int[]{5, 6});
-                connections.add(new int[]{6, 3});
-                break;
-
-            case "SCORPIUS":
-                // Scorpion — 8 stars
-                stars.add(new double[]{245, 80});  // 0 — head
-                stars.add(new double[]{245, 140}); // 1
-                stars.add(new double[]{230, 190}); // 2
-                stars.add(new double[]{245, 240}); // 3 — Antares
-                stars.add(new double[]{260, 290}); // 4
-                stars.add(new double[]{245, 340}); // 5
-                stars.add(new double[]{220, 380}); // 6
-                stars.add(new double[]{200, 420}); // 7 — tail
-                connections.add(new int[]{0, 1});
-                connections.add(new int[]{1, 2});
-                connections.add(new int[]{2, 3});
-                connections.add(new int[]{3, 4});
-                connections.add(new int[]{4, 5});
-                connections.add(new int[]{5, 6});
-                connections.add(new int[]{6, 7});
-                break;
-
-            default: // LEO
-                // Lion — 6 stars
-                stars.add(new double[]{180, 150}); // 0
-                stars.add(new double[]{220, 120}); // 1
-                stars.add(new double[]{270, 130}); // 2
-                stars.add(new double[]{300, 180}); // 3
-                stars.add(new double[]{260, 250}); // 4
-                stars.add(new double[]{180, 260}); // 5
-                connections.add(new int[]{0, 1});
-                connections.add(new int[]{1, 2});
-                connections.add(new int[]{2, 3});
-                connections.add(new int[]{3, 4});
-                connections.add(new int[]{4, 5});
-                connections.add(new int[]{5, 0});
-                break;
+        for (ConstellationDef c : constellations) {
+            double dstSq = Math.pow(worldX - c.cx, 2) + Math.pow(worldY - c.cy, 2);
+            if (dstSq < minDstSq) {
+                minDstSq = dstSq;
+                closest = c;
+            }
         }
 
-        drawStarMap(playerCanvas, playerConnected, lastPlayerStar, Color.DODGERBLUE);
-        drawStarMap(aiCanvas, aiConnected, lastAiStar, Color.TOMATO);
+        // Selection radius: ~220px
+        if (closest != null && minDstSq < 48400) {
+            selectedDef = closest;
+            updateSelectionCard();
+            drawMap();
+        }
     }
 
-    // ─── Star Map Drawing ─────────────────────────────────────
+    @FXML
+    private void recenterOnSelected() {
+        if (selectedDef == null) return;
+        double viewW = mapCanvas.getWidth() > 0 ? mapCanvas.getWidth() : 1000;
+        double viewH = mapCanvas.getHeight() > 0 ? mapCanvas.getHeight() : 700;
+        mapX = clamp(viewW / 2.0 - selectedDef.cx, viewW - WORLD_W, 0);
+        mapY = clamp(viewH / 2.0 - selectedDef.cy, viewH - WORLD_H, 0);
+        drawMap();
+    }
 
-    private void drawStarMap(Canvas canvas, List<Integer> connected,
-                             int lastStar, Color lineColor) {
-        GraphicsContext gc = canvas.getGraphicsContext2D();
-        gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
+    private void updateSelectionCard() {
+        if (selectedDef == null) return;
+        constellationTitleLabel.setText("✦ " + selectedDef.name + " — " + selectedDef.title + " ✦");
+        constellationDescLabel.setText(selectedDef.desc);
 
-        // Background
-        gc.setFill(Color.rgb(5, 8, 22, 0.95));
-        gc.fillRect(0, 0, canvas.getWidth(), canvas.getHeight());
-
-        // Draw ambient background stars
-        gc.setFill(Color.rgb(255, 255, 255, 0.3));
-        for (int i = 0; i < 40; i++) {
-            double x = random.nextDouble() * canvas.getWidth();
-            double y = random.nextDouble() * canvas.getHeight();
-            gc.fillOval(x, y, 1.5, 1.5);
+        boolean enlightened = isConstellationEnlightened(selectedDef.name);
+        if (enlightened) {
+            constellationStatusBadge.setText("✦ ENLIGHTENED ✦");
+            constellationStatusBadge.setStyle("-fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #fde047; -fx-background-color: rgba(234, 179, 8, 0.25); -fx-padding: 3 10; -fx-background-radius: 10; -fx-border-color: #facc15; -fx-border-radius: 10; -fx-border-width: 1;");
+        } else {
+            constellationStatusBadge.setText("🌑 UNEXPLORED");
+            constellationStatusBadge.setStyle("-fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #94a3b8; -fx-background-color: rgba(148, 163, 184, 0.2); -fx-padding: 3 10; -fx-background-radius: 10;");
         }
+    }
 
-        // Draw completed connections
-        gc.setStroke(lineColor);
-        gc.setLineWidth(2);
-        gc.setGlobalAlpha(0.8);
-        for (int i = 0; i < connected.size() - 1; i++) {
-            int from = connected.get(i);
-            int to = connected.get(i + 1);
-            // Check if this is a valid connection
-            for (int[] conn : connections) {
-                if ((conn[0] == from && conn[1] == to) ||
-                        (conn[0] == to && conn[1] == from)) {
-                    gc.strokeLine(
-                            stars.get(from)[0], stars.get(from)[1],
-                            stars.get(to)[0], stars.get(to)[1]);
+    private boolean isConstellationEnlightened(String name) {
+        if (currentPlayer != null) {
+            return currentPlayer.isConstellationEnlightened(name);
+        }
+        return false;
+    }
+
+    // ─── Celestial Map Canvas Rendering ─────────────────────────
+
+    private void startMapAnimation() {
+        mapAnimTimer = new AnimationTimer() {
+            @Override
+            public void handle(long now) {
+                animTime += 0.025;
+                if (mapOverlay.isVisible()) {
+                    drawMap();
                 }
             }
+        };
+        mapAnimTimer.start();
+    }
+
+    private void drawMap() {
+        if (mapCanvas == null) return;
+        GraphicsContext g = mapCanvas.getGraphicsContext2D();
+        double w = mapCanvas.getWidth() > 0 ? mapCanvas.getWidth() : 1000;
+        double h = mapCanvas.getHeight() > 0 ? mapCanvas.getHeight() : 700;
+
+        // Base royal celestial blue background (matching screenshot)
+        g.setFill(Color.web("#020b3b"));
+        g.fillRect(0, 0, w, h);
+
+        // Radiant sky gradient
+        RadialGradient skyGlow = new RadialGradient(
+                0, 0, w / 2.0, h / 2.0, w * 0.7, false, CycleMethod.NO_CYCLE,
+                new Stop(0.0, Color.web("#06268a")),
+                new Stop(0.65, Color.web("#031454")),
+                new Stop(1.0, Color.web("#010826"))
+        );
+        g.setFill(skyGlow);
+        g.fillRect(0, 0, w, h);
+
+        g.save();
+        g.translate(mapX, mapY);
+
+        // Draw astronomical coordinate grid
+        g.setStroke(Color.color(0.2, 0.5, 0.95, 0.14));
+        g.setLineWidth(1.0);
+        for (double x = 0; x <= WORLD_W; x += 150) {
+            g.strokeLine(x, 0, x, WORLD_H);
         }
-        gc.setGlobalAlpha(1.0);
+        for (double y = 0; y <= WORLD_H; y += 150) {
+            g.strokeLine(0, y, WORLD_W, y);
+        }
 
-        // Draw stars
-        for (int i = 0; i < stars.size(); i++) {
-            double x = stars.get(i)[0];
-            double y = stars.get(i)[1];
-
-            boolean isConnected = connected.contains(i);
-            boolean isLast = (i == lastStar);
-
-            // Glow effect
-            if (isLast) {
-                gc.setFill(Color.rgb(255, 255, 100, 0.3));
-                gc.fillOval(x - 15, y - 15, 30, 30);
-            }
-
-            // Star body
-            if (isConnected) {
-                gc.setFill(lineColor);
+        // Draw background stars with realistic twinkle
+        for (int i = 0; i < NUM_BG_STARS; i++) {
+            double alpha = 0.35 + 0.35 * Math.sin(animTime * 1.8 + bgStarTwinkle[i]);
+            alpha = Math.max(0.1, Math.min(0.9, alpha));
+            double r = bgStarR[i];
+            if (r > 2.0) {
+                g.setFill(Color.color(0.95, 0.9, 0.6, alpha));
             } else {
-                gc.setFill(Color.WHITE);
+                g.setFill(Color.color(0.65, 0.85, 1.0, alpha));
             }
-            gc.fillOval(x - 7, y - 7, 14, 14);
+            g.fillOval(bgStarX[i] - r / 2.0, bgStarY[i] - r / 2.0, r, r);
+        }
 
-            // Star number
-            gc.setFill(Color.rgb(0, 0, 0));
-            gc.fillText(String.valueOf(i + 1), x - 4, y + 4);
+        // Render each constellation
+        for (ConstellationDef c : constellations) {
+            drawConstellationOnMap(g, c);
+        }
+
+        // Render pointer arrow over selected constellation (safely above its top-most star)
+        if (selectedDef != null) {
+            drawPointerArrow(g, selectedDef.cx, selectedDef.cy + selectedDef.minStarY);
+        }
+
+        g.restore();
+    }
+
+    private void drawConstellationOnMap(GraphicsContext g, ConstellationDef c) {
+        boolean isSelected = (c == selectedDef);
+        boolean isEnlightened = isConstellationEnlightened(c.name);
+
+        // Draw IAU Sector Boundaries
+        if (c.boundary != null && c.boundary.length > 2) {
+            double[] polyX = new double[c.boundary.length];
+            double[] polyY = new double[c.boundary.length];
+            for (int i = 0; i < c.boundary.length; i++) {
+                polyX[i] = c.cx + c.boundary[i][0];
+                polyY[i] = c.cy + c.boundary[i][1];
+            }
+
+            if (isSelected) {
+                // Glowing golden boundary for selected constellation
+                g.setStroke(Color.web("#fde047", 0.75));
+                g.setLineWidth(2.2);
+                g.strokePolygon(polyX, polyY, c.boundary.length);
+                g.setFill(Color.color(0.1, 0.4, 0.9, 0.08));
+                g.fillPolygon(polyX, polyY, c.boundary.length);
+            } else if (isEnlightened) {
+                // Soft golden starlight boundary
+                g.setStroke(Color.web("#fbbf24", 0.5));
+                g.setLineWidth(1.5);
+                g.strokePolygon(polyX, polyY, c.boundary.length);
+            } else {
+                // Standard cyan celestial sector boundary
+                g.setStroke(Color.web("#2563eb", 0.45));
+                g.setLineWidth(1.2);
+                g.strokePolygon(polyX, polyY, c.boundary.length);
+            }
+        }
+
+        // Draw Constellation Name Label (safely placed ABOVE the highest star)
+        int fontSize = isSelected ? 15 : 13;
+        g.setFont(Font.font("Verdana", FontWeight.BOLD, fontSize));
+        if (isSelected) {
+            g.setFill(Color.web("#fef08a"));
+        } else if (isEnlightened) {
+            g.setFill(Color.web("#fde047"));
+        } else {
+            g.setFill(Color.web("#93c5fd"));
+        }
+
+        // Measure text roughly to center it nicely
+        double approxTextHalfW = c.name.length() * (fontSize * 0.32);
+        double labelY = c.cy + c.minStarY - 18;
+        g.fillText(c.name, c.cx - approxTextHalfW, labelY);
+
+        // Subtitle status: show ✦ ENLIGHTENED only when enlightened, otherwise kept clean (no 'DORMANT')
+        if (isEnlightened) {
+            g.setFont(Font.font("Verdana", 10));
+            g.setFill(Color.web("#fde047", 0.9));
+            double subHalfW = 7 * 6.0; // "✦ ENLIGHTENED" half width
+            g.fillText("✦ ENLIGHTENED", c.cx - subHalfW, labelY - 14);
+        }
+
+        // Draw Links (ONLY if constellation is enlightened!)
+        if (isEnlightened) {
+            for (int[] edge : c.links) {
+                double x1 = c.cx + c.stars[edge[0]][0];
+                double y1 = c.cy + c.stars[edge[0]][1];
+                double x2 = c.cx + c.stars[edge[1]][0];
+                double y2 = c.cy + c.stars[edge[1]][1];
+
+                // Radiant golden starlight beam
+                g.setStroke(Color.color(1.0, 0.82, 0.25, 0.35));
+                g.setLineWidth(8.0);
+                g.strokeLine(x1, y1, x2, y2);
+                g.setStroke(Color.web("#fde047"));
+                g.setLineWidth(2.5);
+                g.strokeLine(x1, y1, x2, y2);
+            }
+        }
+
+        // Draw Stars as 5-pointed celestial star shapes
+        for (double[] s : c.stars) {
+            double sx = c.cx + s[0];
+            double sy = c.cy + s[1];
+
+            if (isEnlightened) {
+                // Radiant enlightened golden star
+                drawStarShape(g, sx, sy, 14, 6.5,
+                        Color.color(1.0, 0.9, 0.3, 0.4),
+                        Color.web("#fef08a"),
+                        Color.web("#fde047"), 1.8);
+                // Center white hot sparkle
+                g.setFill(Color.WHITE);
+                g.fillOval(sx - 2.5, sy - 2.5, 5, 5);
+            } else {
+                // Dark / dormant star (dark slate core, subtle cyan border)
+                drawStarShape(g, sx, sy, 10, 4.5,
+                        null,
+                        Color.web("#0f172a"),
+                        Color.web("#38bdf8", 0.75), 1.2);
+            }
         }
     }
 
-    // ─── Game Start ───────────────────────────────────────────
+    /**
+     * Helper to draw a 5-pointed star polygon with optional outer aura glow and stroke.
+     */
+    private void drawStarShape(GraphicsContext g, double cx, double cy, double rOuter, double rInner,
+                               Color glowColor, Color fillColor, Color strokeColor, double strokeWidth) {
+        if (glowColor != null) {
+            g.setFill(glowColor);
+            fillStarPoints(g, cx, cy, rOuter * 1.6, rInner * 1.6);
+        }
+        if (fillColor != null) {
+            g.setFill(fillColor);
+            fillStarPoints(g, cx, cy, rOuter, rInner);
+        }
+        if (strokeColor != null) {
+            g.setStroke(strokeColor);
+            g.setLineWidth(strokeWidth);
+            strokeStarPoints(g, cx, cy, rOuter, rInner);
+        }
+    }
 
-    private void startGame() {
-        gameActive = true;
+    private void fillStarPoints(GraphicsContext g, double cx, double cy, double rOuter, double rInner) {
+        double[] x = new double[10];
+        double[] y = new double[10];
+        calculateStarPoints(cx, cy, rOuter, rInner, x, y);
+        g.fillPolygon(x, y, 10);
+    }
+
+    private void strokeStarPoints(GraphicsContext g, double cx, double cy, double rOuter, double rInner) {
+        double[] x = new double[10];
+        double[] y = new double[10];
+        calculateStarPoints(cx, cy, rOuter, rInner, x, y);
+        g.strokePolygon(x, y, 10);
+    }
+
+    private void calculateStarPoints(double cx, double cy, double rOuter, double rInner, double[] x, double[] y) {
+        // 5-pointed star starts pointing upwards (-pi/2)
+        double startAngle = -Math.PI / 2.0;
+        double step = Math.PI / 5.0;
+        for (int i = 0; i < 10; i++) {
+            double r = (i % 2 == 0) ? rOuter : rInner;
+            double angle = startAngle + i * step;
+            x[i] = cx + r * Math.cos(angle);
+            y[i] = cy + r * Math.sin(angle);
+        }
+    }
+
+    /**
+     * Renders the floating 3D-styled yellow pointer arrow directly from the user's reference image!
+     */
+    private void drawPointerArrow(GraphicsContext g, double targetX, double targetY) {
+        double bob = Math.sin(animTime * 3.8) * 7.0;
+        double arrowTipY = targetY - 45 + bob;
+        double headW = 38.0;
+        double headH = 22.0;
+        double stemW = 18.0;
+        double stemH = 32.0;
+        double topY = arrowTipY - headH - stemH;
+
+        g.save();
+        g.setEffect(new DropShadow(16, Color.web("#facc15")));
+
+        // Arrow polygon points
+        double[] ax = {
+                targetX,
+                targetX + headW / 2.0,
+                targetX + stemW / 2.0,
+                targetX + stemW / 2.0,
+                targetX - stemW / 2.0,
+                targetX - stemW / 2.0,
+                targetX - headW / 2.0
+        };
+        double[] ay = {
+                arrowTipY,
+                arrowTipY - headH,
+                arrowTipY - headH,
+                topY,
+                topY,
+                arrowTipY - headH,
+                arrowTipY - headH
+        };
+
+        // Vibrant 3D Yellow gradient
+        LinearGradient arrowGrad = new LinearGradient(
+                0, 0, 0, 1, true, CycleMethod.NO_CYCLE,
+                new Stop(0.0, Color.web("#fef08a")),
+                new Stop(0.5, Color.web("#facc15")),
+                new Stop(1.0, Color.web("#eab308"))
+        );
+        g.setFill(arrowGrad);
+        g.fillPolygon(ax, ay, 7);
+
+        g.setStroke(Color.web("#b45309"));
+        g.setLineWidth(2.0);
+        g.strokePolygon(ax, ay, 7);
+
+        // Highlight stripe
+        g.setFill(Color.color(1, 1, 1, 0.4));
+        g.fillRect(targetX - 2.5, topY + 4, 5, stemH + headH - 10);
+
+        g.restore();
+    }
+
+    // ─── Game Mode Selection & Launching ────────────────────────
+
+    @FXML
+    private void startAiMode() {
+        if (selectedDef == null) return;
+        isFriendMode = false;
+        launchDuelGame(selectedDef);
+    }
+
+    @FXML
+    private void startFriendsMode() {
+        if (selectedDef == null) return;
+        isFriendMode = true;
+        isPlayer1Turn = true;
+        launchDuelGame(selectedDef);
+    }
+
+    private void launchDuelGame(ConstellationDef def) {
+        currentDuelDef = def;
+        duelActive = true;
+        selectedStarIdx = -1;
+        player1Score = 0;
+        player2OrAiScore = 0;
         timeLeft = 30;
-        startTimer();
-        startAI();
+
+        p1Links.clear();
+        p2OrAiLinks.clear();
+        friendLinkColors.clear();
+
+        // Switch layers
+        mapOverlay.setVisible(false);
+        gamePane.setVisible(true);
+        resultOverlay.setVisible(false);
+
+        duelConstellationNameLabel.setText("✦ " + def.name + " (" + (isFriendMode ? "FRIENDS DUEL" : "VS AI") + ")");
+        playerScoreLabel.setText("Score: 0");
+        aiScoreLabel.setText("Score: 0");
+        timerLabel.setText("⏱ 0:30");
+
+        if (isFriendMode) {
+            player1TagLabel.setText("★ PLAYER 1 (BLUE)");
+            opponentTagLabel.setText("★ PLAYER 2 (GOLD)");
+            turnIndicatorLabel.setText("Player 1's turn! Click 2 stars to connect.");
+            opponentHeader.setVisible(true);
+            opponentHeader.setManaged(true);
+            versusDivider.setVisible(false);
+            versusDivider.setManaged(false);
+            opponentBoard.setVisible(false);
+            opponentBoard.setManaged(false);
+        } else {
+            player1TagLabel.setText("✦ YOU");
+            opponentTagLabel.setText("✦ AI");
+            turnIndicatorLabel.setText("Race against AI! Connect stars first.");
+            opponentHeader.setVisible(true);
+            opponentHeader.setManaged(true);
+            versusDivider.setVisible(true);
+            versusDivider.setManaged(true);
+            opponentBoard.setVisible(true);
+            opponentBoard.setManaged(true);
+        }
+
+        drawDuelBoard(playerCanvas, p1Links, selectedStarIdx, Color.web("#38bdf8"));
+        if (!isFriendMode) {
+            drawDuelBoard(aiCanvas, p2OrAiLinks, -1, Color.web("#f87171"));
+        }
+
+        startTimers();
     }
 
-    // ─── Timer ────────────────────────────────────────────────
+    private void startTimers() {
+        if (duelTimer != null) duelTimer.stop();
+        if (aiTimer != null) aiTimer.stop();
 
-    private void startTimer() {
-        gameTimer = new Timeline();
-        gameTimer.setCycleCount(Timeline.INDEFINITE);
-        KeyFrame kf = new KeyFrame(Duration.seconds(1), e -> {
+        duelTimer = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
             timeLeft--;
-            int minutes = timeLeft / 60;
-            int seconds = timeLeft % 60;
-            timerLabel.setText(String.format("⏱ %d:%02d", minutes, seconds));
-
-            // Timer turns red when low
-            if (timeLeft <= 10) {
-                timerLabel.setStyle(
-                        "-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: #ff4444;");
-            }
-
+            timerLabel.setText(String.format("⏱ 0:%02d", Math.max(0, timeLeft)));
             if (timeLeft <= 0) {
-                endGame();
+                finishDuel();
             }
-        });
-        gameTimer.getKeyFrames().add(kf);
-        gameTimer.play();
+        }));
+        duelTimer.setCycleCount(Timeline.INDEFINITE);
+        duelTimer.play();
+
+        if (!isFriendMode) {
+            // AI makes a link every 2 seconds
+            aiTimer = new Timeline(new KeyFrame(Duration.seconds(2.2), e -> aiMakeMove()));
+            aiTimer.setCycleCount(Timeline.INDEFINITE);
+            aiTimer.play();
+        }
     }
 
-    // ─── Player Click ─────────────────────────────────────────
+    // ─── Duel Gameplay Interactions ─────────────────────────────
 
-    private void handlePlayerClick(MouseEvent event) {
-        if (!gameActive) return;
+    private void onPlayerCanvasClick(MouseEvent e) {
+        if (!duelActive || currentDuelDef == null) return;
 
-        double clickX = event.getX();
-        double clickY = event.getY();
+        double cw = playerCanvas.getWidth();
+        double ch = playerCanvas.getHeight();
+        double cx = cw / 2.0;
+        double cy = ch / 2.0;
 
-        // Find nearest star within 30px
-        for (int i = 0; i < stars.size(); i++) {
-            double sx = stars.get(i)[0];
-            double sy = stars.get(i)[1];
-            double dist = Math.sqrt(Math.pow(clickX - sx, 2) + Math.pow(clickY - sy, 2));
-
-            if (dist <= 30) {
-                handlePlayerStarClick(i);
+        int clickedStar = -1;
+        for (int i = 0; i < currentDuelDef.stars.length; i++) {
+            double sx = cx + currentDuelDef.stars[i][0] * 2.2;
+            double sy = cy + currentDuelDef.stars[i][1] * 2.2;
+            if (Math.hypot(e.getX() - sx, e.getY() - sy) < 32) {
+                clickedStar = i;
                 break;
             }
         }
-    }
 
-    private void handlePlayerStarClick(int starIndex) {
-        if (lastPlayerStar == -1) {
-            // First star selected
-            lastPlayerStar = starIndex;
-            playerConnected.add(starIndex);
+        if (clickedStar < 0) return;
+
+        if (selectedStarIdx < 0) {
+            // Select first star
+            selectedStarIdx = clickedStar;
+            drawCurrentBoards();
         } else {
-            // Check if valid connection
-            boolean valid = false;
-            for (int[] conn : connections) {
-                if ((conn[0] == lastPlayerStar && conn[1] == starIndex) ||
-                        (conn[0] == starIndex && conn[1] == lastPlayerStar)) {
-                    valid = true;
-                    break;
+            // Attempt to connect selectedStarIdx to clickedStar
+            int a = selectedStarIdx;
+            int b = clickedStar;
+            selectedStarIdx = -1;
+
+            if (a != b && isValidLink(a, b)) {
+                int[] link = getCanonicalLink(a, b);
+                if (isFriendMode) {
+                    if (!containsLink(p1Links, link)) {
+                        p1Links.add(link);
+                        Color c = isPlayer1Turn ? Color.web("#38bdf8") : Color.web("#fbbf24");
+                        friendLinkColors.put(link, c);
+                        if (isPlayer1Turn) {
+                            player1Score += 10;
+                            playerScoreLabel.setText("Score: " + player1Score);
+                        } else {
+                            player2OrAiScore += 10;
+                            aiScoreLabel.setText("Score: " + player2OrAiScore);
+                        }
+                        isPlayer1Turn = !isPlayer1Turn;
+                        turnIndicatorLabel.setText((isPlayer1Turn ? "Player 1 (Blue)" : "Player 2 (Gold)") + "'s turn!");
+                    }
+                } else {
+                    if (!containsLink(p1Links, link)) {
+                        p1Links.add(link);
+                        player1Score += 10;
+                        playerScoreLabel.setText("Score: " + player1Score);
+                    }
                 }
-            }
 
-            if (valid && !playerConnected.contains(starIndex)) {
-                // Correct connection
-                playerConnected.add(starIndex);
-                lastPlayerStar = starIndex;
-                playerScore += 10;
-                playerScoreLabel.setText("Score: " + playerScore);
-                playCorrectEffect(playerCanvas);
+                drawCurrentBoards();
 
-                // Check if player completed constellation
-                if (playerConnected.size() >= stars.size()) {
-                    endGame();
+                // Check victory condition
+                if (p1Links.size() == currentDuelDef.links.length) {
+                    finishDuel();
                 }
             } else {
-                // Wrong connection — penalty
-                playerScore = Math.max(0, playerScore - 5);
-                playerScoreLabel.setText("Score: " + playerScore);
-                playWrongEffect(playerCanvas);
-                lastPlayerStar = -1;
-                playerConnected.clear();
+                drawCurrentBoards();
             }
         }
-        drawStarMap(playerCanvas, playerConnected, lastPlayerStar, Color.DODGERBLUE);
     }
 
-    // ─── AI Logic ─────────────────────────────────────────────
+    private void aiMakeMove() {
+        if (!duelActive || currentDuelDef == null || isFriendMode) return;
 
-    private void startAI() {
-        // AI connects one star every 2 seconds
-        aiTimeline = new Timeline();
-        aiTimeline.setCycleCount(Timeline.INDEFINITE);
-        KeyFrame kf = new KeyFrame(Duration.seconds(2), e -> {
-            if (!gameActive) return;
-            makeAiMove();
-        });
-        aiTimeline.getKeyFrames().add(kf);
-        aiTimeline.play();
+        for (int[] l : currentDuelDef.links) {
+            if (!containsLink(p2OrAiLinks, l)) {
+                p2OrAiLinks.add(l);
+                player2OrAiScore += 10;
+                aiScoreLabel.setText("Score: " + player2OrAiScore);
+                drawDuelBoard(aiCanvas, p2OrAiLinks, -1, Color.web("#f87171"));
+
+                if (p2OrAiLinks.size() == currentDuelDef.links.length) {
+                    finishDuel();
+                }
+                return;
+            }
+        }
     }
 
-    private void makeAiMove() {
-        if (aiConnected.isEmpty()) {
-            // Start from first star
-            aiConnected.add(0);
-            lastAiStar = 0;
+    private boolean isValidLink(int a, int b) {
+        if (currentDuelDef == null) return false;
+        for (int[] edge : currentDuelDef.links) {
+            if ((edge[0] == a && edge[1] == b) || (edge[0] == b && edge[1] == a)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private int[] getCanonicalLink(int a, int b) {
+        return a < b ? new int[]{a, b} : new int[]{b, a};
+    }
+
+    private boolean containsLink(List<int[]> list, int[] link) {
+        for (int[] item : list) {
+            if ((item[0] == link[0] && item[1] == link[1]) || (item[0] == link[1] && item[1] == link[0])) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void drawCurrentBoards() {
+        if (isFriendMode) {
+            drawDuelBoard(playerCanvas, p1Links, selectedStarIdx, isPlayer1Turn ? Color.web("#38bdf8") : Color.web("#fbbf24"));
         } else {
-            // Find next unconnected star
-            for (int[] conn : connections) {
-                int next = -1;
-                if (conn[0] == lastAiStar && !aiConnected.contains(conn[1])) {
-                    next = conn[1];
-                } else if (conn[1] == lastAiStar && !aiConnected.contains(conn[0])) {
-                    next = conn[0];
-                }
+            drawDuelBoard(playerCanvas, p1Links, selectedStarIdx, Color.web("#38bdf8"));
+            drawDuelBoard(aiCanvas, p2OrAiLinks, -1, Color.web("#f87171"));
+        }
+    }
 
-                if (next != -1) {
-                    aiConnected.add(next);
-                    lastAiStar = next;
-                    aiScore += 10;
-                    aiScoreLabel.setText("Score: " + aiScore);
+    private void drawDuelBoard(Canvas canvas, List<int[]> litLinks, int highlightedStar, Color themeColor) {
+        GraphicsContext g = canvas.getGraphicsContext2D();
+        double w = canvas.getWidth();
+        double h = canvas.getHeight();
+        double cx = w / 2.0;
+        double cy = h / 2.0;
 
-                    if (aiConnected.size() >= stars.size()) {
-                        endGame();
-                    }
-                    break;
-                }
+        g.setFill(Color.web("#030b2e"));
+        g.fillRect(0, 0, w, h);
+
+        // Cosmic backdrop
+        g.setFill(Color.web("#091b5c", 0.6));
+        g.fillOval(cx - 180, cy - 180, 360, 360);
+
+        // Ambient background stars
+        g.setFill(Color.color(1, 1, 1, 0.25));
+        for (int i = 0; i < 45; i++) {
+            g.fillOval((i * 73) % w, (i * 127) % h, 1.5, 1.5);
+        }
+
+        if (currentDuelDef == null) return;
+
+        // Draw lit links ONLY (do not show connecting lines until connected)
+        for (int[] link : litLinks) {
+            double x1 = cx + currentDuelDef.stars[link[0]][0] * 2.2;
+            double y1 = cy + currentDuelDef.stars[link[0]][1] * 2.2;
+            double x2 = cx + currentDuelDef.stars[link[1]][0] * 2.2;
+            double y2 = cy + currentDuelDef.stars[link[1]][1] * 2.2;
+
+            Color linkCol = (isFriendMode && friendLinkColors.containsKey(link)) ? friendLinkColors.get(link) : themeColor;
+
+            g.setStroke(Color.color(linkCol.getRed(), linkCol.getGreen(), linkCol.getBlue(), 0.35));
+            g.setLineWidth(10.0);
+            g.strokeLine(x1, y1, x2, y2);
+
+            g.setStroke(linkCol);
+            g.setLineWidth(3.5);
+            g.strokeLine(x1, y1, x2, y2);
+        }
+
+        // Draw stars as 5-pointed celestial star shapes
+        for (int i = 0; i < currentDuelDef.stars.length; i++) {
+            double sx = cx + currentDuelDef.stars[i][0] * 2.2;
+            double sy = cy + currentDuelDef.stars[i][1] * 2.2;
+
+            boolean isLit = isStarInLinks(i, litLinks);
+            boolean isSelected = (i == highlightedStar);
+
+            if (isSelected) {
+                // Outer highlight aura for clicked star
+                g.setFill(Color.web("#fde047", 0.45));
+                fillStarPoints(g, sx, sy, 26, 12);
+            }
+
+            if (isLit) {
+                // Enlightened connected star in duel match
+                drawStarShape(g, sx, sy, 16, 7.5,
+                        Color.color(themeColor.getRed(), themeColor.getGreen(), themeColor.getBlue(), 0.45),
+                        Color.WHITE,
+                        themeColor, 2.0);
+                // Center bright shine
+                g.setFill(Color.WHITE);
+                g.fillOval(sx - 3, sy - 3, 6, 6);
+            } else {
+                // Dark / unlit dormant star
+                drawStarShape(g, sx, sy, 11, 5,
+                        null,
+                        Color.web("#0f172a"),
+                        Color.web("#38bdf8", 0.75), 1.5);
             }
         }
-        drawStarMap(aiCanvas, aiConnected, lastAiStar, Color.TOMATO);
     }
 
-    // ─── Effects ──────────────────────────────────────────────
-
-    private void playCorrectEffect(Canvas canvas) {
-        ScaleTransition scale = new ScaleTransition(Duration.millis(200), canvas);
-        scale.setFromX(1.02);
-        scale.setFromY(1.02);
-        scale.setToX(1.0);
-        scale.setToY(1.0);
-        scale.play();
+    private boolean isStarInLinks(int starIdx, List<int[]> links) {
+        for (int[] edge : links) {
+            if (edge[0] == starIdx || edge[1] == starIdx) return true;
+        }
+        return false;
     }
 
-    private void playWrongEffect(Canvas canvas) {
-        TranslateTransition shake = new TranslateTransition(Duration.millis(80), canvas);
-        shake.setFromX(-8);
-        shake.setToX(8);
-        shake.setCycleCount(4);
-        shake.setAutoReverse(true);
-        shake.play();
-    }
+    // ─── End of Duel & Enlightenment Hook ───────────────────────
 
-    // ─── End Game ─────────────────────────────────────────────
+    private void finishDuel() {
+        duelActive = false;
+        if (duelTimer != null) duelTimer.stop();
+        if (aiTimer != null) aiTimer.stop();
 
-    private void endGame() {
-        if (!gameActive) return;
-        gameActive = false;
-
-        if (gameTimer != null) gameTimer.stop();
-        if (aiTimeline != null) aiTimeline.stop();
-
-        // Show result after short pause
-        PauseTransition pause = new PauseTransition(Duration.millis(500));
-        pause.setOnFinished(e -> showResult());
+        PauseTransition pause = new PauseTransition(Duration.millis(400));
+        pause.setOnFinished(e -> showResults());
         pause.play();
     }
 
-    private void showResult() {
+    private void showResults() {
         resultOverlay.setVisible(true);
-        resultScoreLabel.setText(
-                "Your Score: " + playerScore + "  —  AI Score: " + aiScore);
 
-        if (playerScore > aiScore) {
-            resultLabel.setText("⚔️ YOU WIN!");
-            resultLabel.setStyle(
-                    "-fx-font-size: 52; -fx-font-weight: bold; -fx-text-fill: #00ff88;");
-        } else if (aiScore > playerScore) {
-            resultLabel.setText("🤖 AI WINS!");
-            resultLabel.setStyle(
-                    "-fx-font-size: 52; -fx-font-weight: bold; -fx-text-fill: #ff4444;");
+        boolean isVictory;
+        if (isFriendMode) {
+            isVictory = true; // Constellation completed by friends!
+            if (player1Score > player2OrAiScore) {
+                resultLabel.setText("⚔ PLAYER 1 WINS!");
+            } else if (player2OrAiScore > player1Score) {
+                resultLabel.setText("⚔ PLAYER 2 WINS!");
+            } else {
+                resultLabel.setText("✦ CONSTELLATION ENLIGHTENED! ✦");
+            }
+            resultScoreLabel.setText("Together you lit " + p1Links.size() + " / " + currentDuelDef.links.length + " links!");
         } else {
-            resultLabel.setText("⚔️ IT'S A DRAW!");
-            resultLabel.setStyle(
-                    "-fx-font-size: 52; -fx-font-weight: bold; -fx-text-fill: #f0d060;");
+            boolean completedAll = (p1Links.size() == currentDuelDef.links.length);
+            isVictory = completedAll || (player1Score > player2OrAiScore);
+
+            if (isVictory) {
+                resultLabel.setText("✦ CONSTELLATION ENLIGHTENED! ✦");
+                resultScoreLabel.setText("You illuminated all stars of " + currentDuelDef.name + "! +50 Star Dust");
+            } else {
+                resultLabel.setText("✦ AI CLAIMED THE STARS ✦");
+                resultScoreLabel.setText("You lit " + p1Links.size() + " links, AI lit " + p2OrAiLinks.size() + " links.");
+            }
         }
 
-        // Animate result
-        FadeTransition fade = new FadeTransition(Duration.millis(600), resultOverlay);
-        fade.setFromValue(0);
-        fade.setToValue(1);
-        fade.play();
-    }
+        // Permanently enlighten constellation in Player state & database on victory!
+        if (isVictory && currentDuelDef != null) {
+            if (currentPlayer != null) {
+                currentPlayer.enlightenConstellation(currentDuelDef.name);
+                currentPlayer.setTotalStarDust(currentPlayer.getTotalStarDust() + 50);
 
-    // ─── Buttons ──────────────────────────────────────────────
+                // Save to database permanently under player nickname
+                playerDAO.saveEnlightenedConstellation(currentPlayer.getUsername(), currentDuelDef.name, currentPlayer.getTotalStarDust());
+            }
+        }
+
+        updateHud();
+    }
 
     @FXML
     private void rematch() {
-        // Reset everything
-        playerScore = 0;
-        aiScore = 0;
-        timeLeft = 30;
-        playerScoreLabel.setText("Score: 0");
-        aiScoreLabel.setText("Score: 0");
-        timerLabel.setStyle(
-                "-fx-font-size: 28; -fx-font-weight: bold; -fx-text-fill: white;");
-        timerLabel.setText("⏱ 0:30");
         resultOverlay.setVisible(false);
-        countdownOverlay.setVisible(true);
-        countdownLabel.setStyle(
-                "-fx-font-size: 120; -fx-font-weight: bold; -fx-text-fill: white;");
-        startCountdown();
+        launchDuelGame(currentDuelDef);
+    }
+
+    @FXML
+    private void returnToMap() {
+        duelActive = false;
+        if (duelTimer != null) duelTimer.stop();
+        if (aiTimer != null) aiTimer.stop();
+
+        gamePane.setVisible(false);
+        resultOverlay.setVisible(false);
+        mapOverlay.setVisible(true);
+
+        updateSelectionCard();
+        updateHud();
+        drawMap();
     }
 
     @FXML
     private void backToHub() {
+        duelActive = false;
+        if (mapAnimTimer != null) mapAnimTimer.stop();
+        if (duelTimer != null) duelTimer.stop();
+        if (aiTimer != null) aiTimer.stop();
+
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("GameHubView.fxml"));
             Parent root = loader.load();
-
             GameHubController controller = loader.getController();
-            if (currentPlayer != null) controller.setPlayer(currentPlayer);
-
-            root.setOpacity(0);
-            Stage stage = (Stage) playerCanvas.getScene().getWindow();
+            if (currentPlayer != null) {
+                controller.setPlayer(currentPlayer);
+            }
+            Stage stage = (Stage) rootStackPane.getScene().getWindow();
             SceneManager.switchScene(stage, root);
-
-            FadeTransition fadeIn = new FadeTransition(Duration.seconds(1), root);
-            fadeIn.setFromValue(0);
-            fadeIn.setToValue(1);
-            fadeIn.play();
-
         } catch (Exception e) {
             e.printStackTrace();
         }

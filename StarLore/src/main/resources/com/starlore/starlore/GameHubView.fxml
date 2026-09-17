@@ -135,7 +135,7 @@
       </BorderPane>
 
       <!-- Full Screen Transition Overlays -->
-      <StackPane fx:id="transitionOverlay" prefHeight="150.0" prefWidth="200.0" style="-fx-background-color: transparent;" visible="false" mouseTransparent="true">
+      <StackPane fx:id="transitionOverlay" style="-fx-background-color: transparent;" visible="false">
          <children>
             <Canvas fx:id="transitionCanvas" height="700.0" width="1000.0" />
             <Label fx:id="transitionLabel" style="-fx-font-family: 'Verdana'; -fx-font-size: 28px; -fx-text-fill: white; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, #38bdf8, 16, 0.7, 0, 0);" text="" visible="false" />

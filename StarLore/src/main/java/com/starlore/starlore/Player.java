@@ -12,6 +12,8 @@ public class Player {
     private int starsCaught;
     private int bestCombo;
     private int totalStarDust;
+    private java.util.Set<String> enlightenedConstellations = new java.util.HashSet<>();
+
     public Player(String username, boolean isNewPlayer) {
         this.username = username;
         this.isNewPlayer = isNewPlayer;
@@ -39,4 +41,24 @@ public class Player {
     public int getTotalStarDust() { return totalStarDust; }
     public void setTotalStarDust(int totalStarDust) { this.totalStarDust = totalStarDust; }
 
+    public java.util.Set<String> getEnlightenedConstellations() {
+        if (enlightenedConstellations == null) enlightenedConstellations = new java.util.HashSet<>();
+        return enlightenedConstellations;
+    }
+
+    public void setEnlightenedConstellations(java.util.Set<String> set) {
+        this.enlightenedConstellations = set != null ? set : new java.util.HashSet<>();
+        this.constellationsMastered = this.enlightenedConstellations.size();
+    }
+
+    public boolean isConstellationEnlightened(String name) {
+        return enlightenedConstellations != null && name != null && enlightenedConstellations.contains(name.toUpperCase());
+    }
+
+    public void enlightenConstellation(String name) {
+        if (name == null) return;
+        if (enlightenedConstellations == null) enlightenedConstellations = new java.util.HashSet<>();
+        enlightenedConstellations.add(name.toUpperCase());
+        this.constellationsMastered = enlightenedConstellations.size();
+    }
 }

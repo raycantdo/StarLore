@@ -9,6 +9,9 @@ public class PlayerDAO {
     public Player checkOrCreatePlayer(String username) throws Exception {
         Connection conn = DatabaseConnection.getConnection();
 
+        // Ensure database table and columns support permanent enlightenment
+        initDatabaseSchema(conn);
+
         String checkSQL = "SELECT * FROM players WHERE username = ?";
         PreparedStatement checkStmt = conn.prepareStatement(checkSQL);
         checkStmt.setString(1, username);
@@ -27,6 +30,22 @@ public class PlayerDAO {
             try { player.setStarsCaught(rs.getInt("stars_caught")); } catch (Exception ignored) {}
             try { player.setBestCombo(rs.getInt("best_combo")); } catch (Exception ignored) {}
             try { player.setTotalStarDust(rs.getInt("total_star_dust")); } catch (Exception ignored) {}
+
+            // Load enlightened constellations string (comma-separated: e.g. "ARIES,TAURUS,ORION")
+            try {
+                String enlightenedStr = rs.getString("enlightened_constellations");
+                if (enlightenedStr != null && !enlightenedStr.trim().isEmpty()) {
+                    String[] names = enlightenedStr.split(",");
+                    java.util.Set<String> set = new java.util.HashSet<>();
+                    for (String n : names) {
+                        if (!n.trim().isEmpty()) set.add(n.trim().toUpperCase());
+                    }
+                    player.setEnlightenedConstellations(set);
+                }
+            } catch (Exception ignored) {}
+
+            // Also load from separate player_enlightened table if present
+            loadEnlightenedFromTable(conn, username, player);
 
             // Safely attempt to update last login
             try {
@@ -55,5 +74,103 @@ public class PlayerDAO {
             conn.close();
             return new Player(username, true);
         }
+    }
+
+    /**
+     * Permanently saves an enlightened constellation for a player nickname in the database.
+     */
+    public void saveEnlightenedConstellation(String username, String constellationName, int totalStarDust) {
+        if (username == null || constellationName == null) return;
+        new Thread(() -> {
+            try (Connection conn = DatabaseConnection.getConnection()) {
+                initDatabaseSchema(conn);
+
+                // 1. Save to player_enlightened table
+                try {
+                    String sql = "INSERT IGNORE INTO player_enlightened (username, constellation_name, enlightened_at) VALUES (?, ?, NOW())";
+                    try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                        stmt.setString(1, username);
+                        stmt.setString(2, constellationName.toUpperCase());
+                        stmt.executeUpdate();
+                    }
+                } catch (Exception ignored) {}
+
+                // 2. Also append to enlightened_constellations column in players table
+                try {
+                    String query = "SELECT enlightened_constellations, constellations_mastered FROM players WHERE username = ?";
+                    String currentList = "";
+                    int mastered = 0;
+                    try (PreparedStatement qStmt = conn.prepareStatement(query)) {
+                        qStmt.setString(1, username);
+                        ResultSet rs = qStmt.executeQuery();
+                        if (rs.next()) {
+                            currentList = rs.getString("enlightened_constellations");
+                            mastered = rs.getInt("constellations_mastered");
+                        }
+                    }
+
+                    java.util.Set<String> set = new java.util.HashSet<>();
+                    if (currentList != null && !currentList.trim().isEmpty()) {
+                        for (String s : currentList.split(",")) {
+                            if (!s.trim().isEmpty()) set.add(s.trim().toUpperCase());
+                        }
+                    }
+                    set.add(constellationName.toUpperCase());
+                    String updatedList = String.join(",", set);
+
+                    String updateSQL = "UPDATE players SET enlightened_constellations = ?, constellations_mastered = ?, total_star_dust = ? WHERE username = ?";
+                    try (PreparedStatement uStmt = conn.prepareStatement(updateSQL)) {
+                        uStmt.setString(1, updatedList);
+                        uStmt.setInt(2, set.size());
+                        uStmt.setInt(3, totalStarDust);
+                        uStmt.setString(4, username);
+                        uStmt.executeUpdate();
+                    }
+                } catch (Exception ignored) {}
+
+            } catch (Exception e) {
+                System.err.println("[PlayerDAO] Error saving enlightened constellation: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    private void loadEnlightenedFromTable(Connection conn, String username, Player player) {
+        try {
+            String sql = "SELECT constellation_name FROM player_enlightened WHERE username = ?";
+            try (PreparedStatement stmt = conn.prepareStatement(sql)) {
+                stmt.setString(1, username);
+                ResultSet rs = stmt.executeQuery();
+                while (rs.next()) {
+                    String cName = rs.getString("constellation_name");
+                    if (cName != null) {
+                        player.enlightenConstellation(cName);
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+    }
+
+    private void initDatabaseSchema(Connection conn) {
+        // Ensure table player_enlightened exists
+        try {
+            String createTableSQL = "CREATE TABLE IF NOT EXISTS player_enlightened (" +
+                    "id INT AUTO_INCREMENT PRIMARY KEY, " +
+                    "username VARCHAR(100) NOT NULL, " +
+                    "constellation_name VARCHAR(100) NOT NULL, " +
+                    "enlightened_at DATETIME DEFAULT CURRENT_TIMESTAMP, " +
+                    "UNIQUE KEY unique_user_const (username, constellation_name)" +
+                    ")";
+            try (PreparedStatement stmt = conn.prepareStatement(createTableSQL)) {
+                stmt.executeUpdate();
+            }
+        } catch (Exception ignored) {}
+
+        // Ensure players table has enlightened_constellations column
+        try {
+            String alterSQL = "ALTER TABLE players ADD COLUMN enlightened_constellations TEXT";
+            try (PreparedStatement stmt = conn.prepareStatement(alterSQL)) {
+                stmt.executeUpdate();
+            }
+        } catch (Exception ignored) {}
     }
 }
