@@ -422,16 +422,34 @@ public class ShootingStarController {
         double h = gameCanvas.getHeight();
 
         LinearGradient bg = new LinearGradient(0, 0, 1, 1, true, CycleMethod.NO_CYCLE,
-                new Stop(0, Color.web("#0b0f1a")),
-                new Stop(1, Color.web("#161f33")));
+                new Stop(0, Color.web("#020308")),
+                new Stop(1, Color.web("#050c20")));
         gc.setFill(bg);
         gc.fillRect(0, 0, w, h);
+
+        // Soft celestial nebula clouds
+        RadialGradient nebulaPurple = new RadialGradient(
+                0, 0, w * 0.85, h * 0.25, w * 0.45, false, CycleMethod.NO_CYCLE,
+                new Stop(0.0, Color.rgb(112, 26, 230, 0.08)),
+                new Stop(0.6, Color.TRANSPARENT)
+        );
+        gc.setFill(nebulaPurple);
+        gc.fillRect(0, 0, w, h);
+
+        RadialGradient nebulaCyan = new RadialGradient(
+                0, 0, w * 0.15, h * 0.75, w * 0.45, false, CycleMethod.NO_CYCLE,
+                new Stop(0.0, Color.rgb(14, 165, 233, 0.07)),
+                new Stop(0.6, Color.TRANSPARENT)
+        );
+        gc.setFill(nebulaCyan);
+        gc.fillRect(0, 0, w, h);
+
         gc.setTextAlign(TextAlignment.LEFT);
 
-        gc.setStroke(Color.web("#ffffff", 0.035));
+        gc.setStroke(Color.web("#ffffff", 0.03));
         gc.setLineWidth(1);
-        for (int x = 0; x < w; x += 40) gc.strokeLine(x, 0, x, h);
-        for (int y = 0; y < h; y += 40) gc.strokeLine(0, y, w, y);
+        for (int x = 0; x < w; x += 45) gc.strokeLine(x, 0, x, h);
+        for (int y = 0; y < h; y += 45) gc.strokeLine(0, y, w, y);
 
         for (BgStar star : bgStars) {
             double twinkle = 0.35 + 0.35 * Math.sin(elapsedSeconds * 1.5 + star.phase);

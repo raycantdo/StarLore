@@ -464,16 +464,16 @@ public class DuelController {
         double w = mapCanvas.getWidth() > 0 ? mapCanvas.getWidth() : 1000;
         double h = mapCanvas.getHeight() > 0 ? mapCanvas.getHeight() : 700;
 
-        // Base royal celestial blue background (matching screenshot)
-        g.setFill(Color.web("#020b3b"));
+        // Base deep celestial navy background
+        g.setFill(Color.web("#020308"));
         g.fillRect(0, 0, w, h);
 
         // Radiant sky gradient
         RadialGradient skyGlow = new RadialGradient(
                 0, 0, w / 2.0, h / 2.0, w * 0.7, false, CycleMethod.NO_CYCLE,
-                new Stop(0.0, Color.web("#06268a")),
-                new Stop(0.65, Color.web("#031454")),
-                new Stop(1.0, Color.web("#010826"))
+                new Stop(0.0, Color.web("#051642")),
+                new Stop(0.65, Color.web("#020924")),
+                new Stop(1.0, Color.web("#020308"))
         );
         g.setFill(skyGlow);
         g.fillRect(0, 0, w, h);
@@ -781,7 +781,7 @@ public class DuelController {
 
         drawDuelBoard(playerCanvas, p1Links, selectedStarIdx, Color.web("#38bdf8"));
         if (!isFriendMode) {
-            drawDuelBoard(aiCanvas, p2OrAiLinks, -1, Color.web("#f87171"));
+            drawDuelBoard(aiCanvas, p2OrAiLinks, -1, Color.web("#c084fc"));
         }
 
         startTimers();
@@ -819,51 +819,45 @@ public class DuelController {
         double cx = cw / 2.0;
         double cy = ch / 2.0;
 
-        int clickedStar = -1;
         for (int i = 0; i < currentDuelDef.stars.length; i++) {
             double sx = cx + currentDuelDef.stars[i][0] * 2.2;
             double sy = cy + currentDuelDef.stars[i][1] * 2.2;
-            if (Math.hypot(e.getX() - sx, e.getY() - sy) < 32) {
-                clickedStar = i;
+
+            if (Math.hypot(e.getX() - sx, e.getY() - sy) < 22) {
+                handleStarClicked(i);
                 break;
             }
         }
+    }
 
-        if (clickedStar < 0) return;
-
-        if (selectedStarIdx < 0) {
-            // Select first star
-            selectedStarIdx = clickedStar;
+    private void handleStarClicked(int clickedIdx) {
+        if (selectedStarIdx == -1) {
+            selectedStarIdx = clickedIdx;
+            drawCurrentBoards();
+        } else if (selectedStarIdx == clickedIdx) {
+            selectedStarIdx = -1;
             drawCurrentBoards();
         } else {
-            // Attempt to connect selectedStarIdx to clickedStar
             int a = selectedStarIdx;
-            int b = clickedStar;
+            int b = clickedIdx;
             selectedStarIdx = -1;
 
-            if (a != b && isValidLink(a, b)) {
+            if (isValidLink(a, b)) {
                 int[] link = getCanonicalLink(a, b);
+                if (containsLink(p1Links, link)) {
+                    drawCurrentBoards();
+                    return;
+                }
+
+                p1Links.add(link);
+                player1Score += 10;
+                playerScoreLabel.setText("Score: " + player1Score);
+
                 if (isFriendMode) {
-                    if (!containsLink(p1Links, link)) {
-                        p1Links.add(link);
-                        Color c = isPlayer1Turn ? Color.web("#38bdf8") : Color.web("#fbbf24");
-                        friendLinkColors.put(link, c);
-                        if (isPlayer1Turn) {
-                            player1Score += 10;
-                            playerScoreLabel.setText("Score: " + player1Score);
-                        } else {
-                            player2OrAiScore += 10;
-                            aiScoreLabel.setText("Score: " + player2OrAiScore);
-                        }
-                        isPlayer1Turn = !isPlayer1Turn;
-                        turnIndicatorLabel.setText((isPlayer1Turn ? "Player 1 (Blue)" : "Player 2 (Gold)") + "'s turn!");
-                    }
-                } else {
-                    if (!containsLink(p1Links, link)) {
-                        p1Links.add(link);
-                        player1Score += 10;
-                        playerScoreLabel.setText("Score: " + player1Score);
-                    }
+                    Color playerColor = isPlayer1Turn ? Color.web("#38bdf8") : Color.web("#fbbf24");
+                    friendLinkColors.put(link, playerColor);
+                    isPlayer1Turn = !isPlayer1Turn;
+                    turnIndicatorLabel.setText((isPlayer1Turn ? "Player 1's" : "Player 2's") + " turn! Click 2 stars to connect.");
                 }
 
                 drawCurrentBoards();
@@ -886,7 +880,7 @@ public class DuelController {
                 p2OrAiLinks.add(l);
                 player2OrAiScore += 10;
                 aiScoreLabel.setText("Score: " + player2OrAiScore);
-                drawDuelBoard(aiCanvas, p2OrAiLinks, -1, Color.web("#f87171"));
+                drawDuelBoard(aiCanvas, p2OrAiLinks, -1, Color.web("#c084fc"));
 
                 if (p2OrAiLinks.size() == currentDuelDef.links.length) {
                     finishDuel();
@@ -924,7 +918,7 @@ public class DuelController {
             drawDuelBoard(playerCanvas, p1Links, selectedStarIdx, isPlayer1Turn ? Color.web("#38bdf8") : Color.web("#fbbf24"));
         } else {
             drawDuelBoard(playerCanvas, p1Links, selectedStarIdx, Color.web("#38bdf8"));
-            drawDuelBoard(aiCanvas, p2OrAiLinks, -1, Color.web("#f87171"));
+            drawDuelBoard(aiCanvas, p2OrAiLinks, -1, Color.web("#c084fc"));
         }
     }
 
@@ -935,11 +929,16 @@ public class DuelController {
         double cx = w / 2.0;
         double cy = h / 2.0;
 
-        g.setFill(Color.web("#030b2e"));
+        g.setFill(Color.web("#020308"));
         g.fillRect(0, 0, w, h);
 
-        // Cosmic backdrop
-        g.setFill(Color.web("#091b5c", 0.6));
+        // Soft celestial glow
+        RadialGradient boardGlow = new RadialGradient(
+                0, 0, cx, cy, 180, false, CycleMethod.NO_CYCLE,
+                new Stop(0.0, Color.color(themeColor.getRed(), themeColor.getGreen(), themeColor.getBlue(), 0.12)),
+                new Stop(1.0, Color.TRANSPARENT)
+        );
+        g.setFill(boardGlow);
         g.fillOval(cx - 180, cy - 180, 360, 360);
 
         // Ambient background stars

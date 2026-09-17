@@ -212,7 +212,7 @@ public class SceneManager {
                 }
             }
         }
-        return "-fx-background-color: #050816;";
+        return "-fx-background-color: #020308;";
     }
 
     public static Stage getPrimaryStage() {

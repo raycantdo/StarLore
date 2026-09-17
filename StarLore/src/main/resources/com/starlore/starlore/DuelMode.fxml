@@ -9,7 +9,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<StackPane fx:id="rootStackPane" prefHeight="700.0" prefWidth="1000.0" style="-fx-background-color: #010826;" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.starlore.starlore.DuelController">
+<StackPane fx:id="rootStackPane" prefHeight="700.0" prefWidth="1000.0" style="-fx-background-color: #020308;" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.starlore.starlore.DuelController">
    <children>
       <!-- LAYER 1: Interactive Celestial Atlas Map -->
       <StackPane fx:id="mapOverlay">
@@ -32,9 +32,9 @@
                         <Region HBox.hgrow="ALWAYS" />
 
                         <!-- Astral Energy Bar -->
-                        <HBox alignment="CENTER" spacing="6.0" style="-fx-background-color: rgba(234, 88, 12, 0.85); -fx-background-radius: 20; -fx-padding: 6 16; -fx-border-color: #f59e0b; -fx-border-radius: 20; -fx-border-width: 1.5;">
+                        <HBox alignment="CENTER" spacing="6.0" style="-fx-background-color: rgba(2, 132, 199, 0.85); -fx-background-radius: 20; -fx-padding: 6 16; -fx-border-color: #38bdf8; -fx-border-radius: 20; -fx-border-width: 1.5;">
                            <children>
-                              <Label text="⚡" style="-fx-font-size: 14px;" />
+                              <Label text="⚡" style="-fx-font-size: 14px; -fx-text-fill: #38bdf8;" />
                               <Label text="100/100" style="-fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 13px; -fx-text-fill: white;" />
                            </children>
                         </HBox>
@@ -89,13 +89,13 @@
       </StackPane>
 
       <!-- LAYER 2: Constellation Duel Gameplay -->
-      <BorderPane fx:id="gamePane" visible="false" style="-fx-background-color: #030820;">
+      <BorderPane fx:id="gamePane" visible="false" style="-fx-background-color: #020308;">
          <top>
-            <HBox alignment="CENTER" style="-fx-padding: 16 24 12 24;">
+            <HBox alignment="CENTER" style="-fx-padding: 14 24 10 24; -fx-background-color: rgba(5, 10, 25, 0.88); -fx-border-color: rgba(56, 189, 248, 0.25); -fx-border-width: 0 0 1.5 0;">
                <children>
                   <VBox alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
                      <children>
-                        <Label fx:id="player1TagLabel" text="✦ YOU" style="-fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #56c7ff;" />
+                        <Label fx:id="player1TagLabel" text="✦ YOU" style="-fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #38bdf8;" />
                         <Label fx:id="playerScoreLabel" text="Score: 0" style="-fx-font-family: 'Verdana'; -fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: white;" />
                      </children>
                   </VBox>
@@ -108,7 +108,7 @@
                   </VBox>
                   <VBox fx:id="opponentHeader" alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
                      <children>
-                        <Label fx:id="opponentTagLabel" text="✦ AI" style="-fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #ff7e6b;" />
+                        <Label fx:id="opponentTagLabel" text="✦ AI" style="-fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #c084fc;" />
                         <Label fx:id="aiScoreLabel" text="Score: 0" style="-fx-font-family: 'Verdana'; -fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: white;" />
                      </children>
                   </VBox>
@@ -123,7 +123,7 @@
                         <Canvas fx:id="playerCanvas" height="560.0" width="480.0" />
                      </children>
                   </StackPane>
-                  <VBox fx:id="versusDivider" style="-fx-background-color: #25336b; -fx-min-width: 2; -fx-max-width: 2;" />
+                  <VBox fx:id="versusDivider" style="-fx-background-color: rgba(56, 189, 248, 0.3); -fx-min-width: 2; -fx-max-width: 2;" />
                   <StackPane fx:id="opponentBoard" alignment="CENTER" HBox.hgrow="ALWAYS">
                      <children>
                         <Canvas fx:id="aiCanvas" height="560.0" width="480.0" />
@@ -133,9 +133,9 @@
             </HBox>
          </center>
          <bottom>
-            <HBox alignment="CENTER" style="-fx-padding: 8 0 12 0;">
+            <HBox alignment="CENTER" style="-fx-padding: 10 0 14 0;">
                <children>
-                  <Button onAction="#returnToMap" text="✦ Abandon &amp; Return to Map" style="-fx-background-color: rgba(30, 41, 59, 0.8); -fx-text-fill: #94a3b8; -fx-font-family: 'Verdana'; -fx-font-size: 12px; -fx-padding: 6 18; -fx-background-radius: 15; -fx-cursor: hand;" />
+                  <Button onAction="#returnToMap" text="✦ Abandon &amp; Return to Map" style="-fx-background-color: rgba(15, 23, 42, 0.85); -fx-text-fill: #94a3b8; -fx-font-family: 'Verdana'; -fx-font-size: 12px; -fx-padding: 8 20; -fx-background-radius: 20; -fx-border-color: rgba(148, 163, 184, 0.3); -fx-border-radius: 20; -fx-cursor: hand;" />
                </children>
             </HBox>
          </bottom>

@@ -13,7 +13,7 @@
 
 <AnchorPane fx:id="rootPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
             prefHeight="700.0" prefWidth="950.0"
-            style="-fx-background-color: #050819;"
+            style="-fx-background-color: #020308;"
             xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.starlore.starlore.HelloController">
    <children>

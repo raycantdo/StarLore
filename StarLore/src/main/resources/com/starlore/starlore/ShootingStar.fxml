@@ -12,112 +12,95 @@
 
 <AnchorPane fx:id="rootPane" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/17"
             fx:controller="com.starlore.starlore.ShootingStarController"
-            prefWidth="900" prefHeight="620" style="-fx-background-color: #0b0f1a;">
+            prefWidth="900" prefHeight="620" style="-fx-background-color: #020308;">
    <children>
       <Canvas fx:id="gameCanvas" width="900" height="620" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
 
-      <!-- ─── Top HUD bar ─────────────────────────────────────────── -->
-      <HBox layoutX="18" layoutY="14" spacing="34" AnchorPane.leftAnchor="18" AnchorPane.rightAnchor="70">
+      <!-- ─── Top Floating Glass Cockpit HUD ──────────────────────── -->
+      <HBox alignment="CENTER_LEFT" layoutX="18" layoutY="14" spacing="26" AnchorPane.leftAnchor="18" AnchorPane.rightAnchor="85"
+            style="-fx-background-color: rgba(5, 10, 25, 0.85); -fx-background-radius: 24; -fx-border-color: rgba(56, 189, 248, 0.35); -fx-border-radius: 24; -fx-border-width: 1.5; -fx-padding: 7 22; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.7), 16, 0, 0, 4);">
          <children>
 
             <!-- HEALTH -->
-            <VBox spacing="4">
+            <VBox spacing="3" alignment="CENTER_LEFT">
                <children>
-                  <Label text="HEALTH" textFill="#7f88a3">
-                     <font><Font name="Verdana Bold" size="11" /></font>
-                  </Label>
-                  <HBox spacing="6">
+                  <Label text="HEALTH" textFill="#94a3b8" style="-fx-font-family: 'Verdana'; -fx-font-size: 10px; -fx-font-weight: bold; -fx-letter-spacing: 1.5;" />
+                  <HBox spacing="8" alignment="CENTER_LEFT">
                      <children>
-                        <Circle fx:id="life1" radius="9" fill="#ff5d73" />
-                        <Circle fx:id="life2" radius="9" fill="#ff5d73" />
-                        <Circle fx:id="life3" radius="9" fill="#ff5d73" />
+                        <Circle fx:id="life1" radius="9" fill="#ef4444" style="-fx-effect: dropshadow(gaussian, #ef4444, 8, 0.5, 0, 0);" />
+                        <Circle fx:id="life2" radius="9" fill="#ef4444" style="-fx-effect: dropshadow(gaussian, #ef4444, 8, 0.5, 0, 0);" />
+                        <Circle fx:id="life3" radius="9" fill="#ef4444" style="-fx-effect: dropshadow(gaussian, #ef4444, 8, 0.5, 0, 0);" />
                      </children>
                   </HBox>
                </children>
             </VBox>
 
             <!-- LEVEL PROGRESS -->
-            <VBox spacing="4">
+            <VBox spacing="3" alignment="CENTER_LEFT">
                <children>
-                  <Label fx:id="levelLabel" text="LVL 1" textFill="#7f88a3">
-                     <font><Font name="Verdana Bold" size="11" /></font>
-                  </Label>
-                  <ProgressBar fx:id="levelProgressBar" prefWidth="150" prefHeight="10" progress="0.0"
-                               style="-fx-accent: #4da3ff;" />
+                  <Label fx:id="levelLabel" text="LVL 1" textFill="#38bdf8" style="-fx-font-family: 'Verdana'; -fx-font-size: 10px; -fx-font-weight: bold; -fx-letter-spacing: 1.5;" />
+                  <ProgressBar fx:id="levelProgressBar" prefWidth="130" prefHeight="8" progress="0.0"
+                               style="-fx-accent: #38bdf8; -fx-control-inner-background: rgba(15, 23, 42, 0.8); -fx-border-color: rgba(56, 189, 248, 0.3); -fx-border-radius: 4; -fx-background-radius: 4;" />
                </children>
             </VBox>
 
             <!-- SCORE -->
-            <VBox spacing="4">
+            <VBox spacing="2" alignment="CENTER_LEFT">
                <children>
-                  <Label text="SCORE" textFill="#7f88a3">
-                     <font><Font name="Verdana Bold" size="11" /></font>
-                  </Label>
-                  <Label fx:id="scoreLabel" text="0" textFill="WHITE">
-                     <font><Font name="Verdana Bold" size="18" /></font>
-                  </Label>
+                  <Label text="SCORE" textFill="#94a3b8" style="-fx-font-family: 'Verdana'; -fx-font-size: 10px; -fx-font-weight: bold; -fx-letter-spacing: 1.5;" />
+                  <Label fx:id="scoreLabel" text="0" textFill="WHITE" style="-fx-font-family: 'Verdana'; -fx-font-size: 18px; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(255,255,255,0.4), 6, 0.5, 0, 0);" />
                </children>
             </VBox>
 
             <!-- BEST -->
-            <VBox spacing="4">
+            <VBox spacing="2" alignment="CENTER_LEFT">
                <children>
-                  <Label text="BEST" textFill="#7f88a3">
-                     <font><Font name="Verdana Bold" size="11" /></font>
-                  </Label>
-                  <Label fx:id="bestLabel" text="0" textFill="#ffd166">
-                     <font><Font name="Verdana Bold" size="18" /></font>
-                  </Label>
+                  <Label text="BEST" textFill="#f59e0b" style="-fx-font-family: 'Verdana'; -fx-font-size: 10px; -fx-font-weight: bold; -fx-letter-spacing: 1.5;" />
+                  <Label fx:id="bestLabel" text="0" textFill="#fcd34d" style="-fx-font-family: 'Verdana'; -fx-font-size: 18px; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, rgba(245, 158, 11, 0.5), 8, 0.5, 0, 0);" />
                </children>
             </VBox>
 
             <!-- TIMER -->
-            <VBox spacing="4">
+            <VBox spacing="2" alignment="CENTER_LEFT">
                <children>
-                  <Label text="TIME" textFill="#7f88a3">
-                     <font><Font name="Verdana Bold" size="11" /></font>
-                  </Label>
-                  <Label fx:id="timerLabel" text="60s" textFill="WHITE">
-                     <font><Font name="Verdana Bold" size="18" /></font>
-                  </Label>
+                  <Label text="TIME" textFill="#94a3b8" style="-fx-font-family: 'Verdana'; -fx-font-size: 10px; -fx-font-weight: bold; -fx-letter-spacing: 1.5;" />
+                  <Label fx:id="timerLabel" text="60s" textFill="WHITE" style="-fx-font-family: 'Verdana'; -fx-font-size: 18px; -fx-font-weight: bold;" />
                </children>
             </VBox>
 
             <!-- COMBO -->
-            <VBox spacing="4">
+            <VBox spacing="2" alignment="CENTER_LEFT">
                <children>
-                  <Label text="COMBO" textFill="#7f88a3">
-                     <font><Font name="Verdana Bold" size="11" /></font>
-                  </Label>
-                  <Label fx:id="comboLabel" text="x1" textFill="#f0d060">
-                     <font><Font name="Verdana Bold" size="18" /></font>
-                  </Label>
+                  <Label text="COMBO" textFill="#c084fc" style="-fx-font-family: 'Verdana'; -fx-font-size: 10px; -fx-font-weight: bold; -fx-letter-spacing: 1.5;" />
+                  <Label fx:id="comboLabel" text="x1" textFill="#fde047" style="-fx-font-family: 'Verdana'; -fx-font-size: 18px; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, #f59e0b, 10, 0.6, 0, 0);" />
                </children>
             </VBox>
 
          </children>
       </HBox>
 
-      <!-- ─── Back button ─────────────────────────────────────────── -->
-      <Button fx:id="backButton" text="←"
+      <!-- ─── Back to Hub Button ──────────────────────────────────── -->
+      <Button fx:id="backButton" text="🏠 Hub"
               onAction="#backToHub"
               AnchorPane.rightAnchor="18" AnchorPane.topAnchor="14"
-              style="-fx-background-color: rgba(255,255,255,0.06);
-                     -fx-background-radius: 8;
-                     -fx-text-fill: white;
-                     -fx-font-size: 18;
+              style="-fx-background-color: rgba(15, 23, 42, 0.85);
+                     -fx-background-radius: 20;
+                     -fx-text-fill: #38bdf8;
+                     -fx-font-family: 'Verdana';
+                     -fx-font-size: 12px;
+                     -fx-font-weight: bold;
+                     -fx-border-color: #38bdf8;
+                     -fx-border-radius: 20;
                      -fx-cursor: hand;
-                     -fx-min-width: 32; -fx-min-height: 32;"/>
+                     -fx-padding: 8 16;
+                     -fx-effect: dropshadow(gaussian, rgba(56, 189, 248, 0.35), 10, 0, 0, 2);"/>
 
-      <!-- ─── Legend (bottom-left, like a radar key) ────────────────── -->
-      <VBox layoutX="18" AnchorPane.bottomAnchor="16" spacing="3" style="-fx-opacity: 0.85;">
+      <!-- ─── Radar Legend (bottom-left) ──────────────────────────── -->
+      <VBox layoutX="18" AnchorPane.bottomAnchor="16" spacing="4"
+            style="-fx-background-color: rgba(5, 10, 25, 0.82); -fx-background-radius: 12; -fx-border-color: rgba(56, 189, 248, 0.25); -fx-border-radius: 12; -fx-padding: 7 14; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 10, 0, 0, 2);">
          <children>
-            <Label text="⭐ Stars / Planets / Stardust — points" textFill="#8fd6ff">
-               <font><Font name="Verdana" size="11" /></font>
-            </Label>
-            <Label text="☄ Meteor −1 life   ●  Black Hole −2 lives   ◆ Dark Matter −10 pts" textFill="#ff8fa3">
-               <font><Font name="Verdana" size="11" /></font>
-            </Label>
+            <Label text="✦ Stars / Planets / Stardust — collect for points &amp; combos" textFill="#7dd3fc" style="-fx-font-family: 'Verdana'; -fx-font-size: 11px;" />
+            <Label text="☄ Meteor −1 life   ● Black Hole −2 lives   ◆ Dark Matter −10 pts" textFill="#f87171" style="-fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-font-weight: bold;" />
          </children>
       </VBox>
    </children>

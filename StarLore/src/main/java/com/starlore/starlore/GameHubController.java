@@ -64,6 +64,18 @@ public class GameHubController {
     private static final int NUM_CONSTELLATION_NODES = 35;
     private static final double MAX_CONNECT_DIST = 160.0;
 
+    // ─── Ambient Shooting Stars ────────────────────────────────
+    private static class HubShootingStar {
+        double x, y, vx, vy, len, life, maxLife;
+        Color color;
+        HubShootingStar(double x, double y, double vx, double vy, double len, double maxLife, Color color) {
+            this.x = x; this.y = y; this.vx = vx; this.vy = vy;
+            this.len = len; this.life = maxLife; this.maxLife = maxLife;
+            this.color = color;
+        }
+    }
+    private final List<HubShootingStar> hubShootingStars = new ArrayList<>();
+
     @FXML
     public void initialize() {
         SoundManager.playMenuMusic();
@@ -233,52 +245,84 @@ public class GameHubController {
             gc.setFill(Color.WHITE);
             gc.fillOval(s1.x - 1.5, s1.y - 1.5, 3, 3);
         }
+
+        // ─── Occasional Shooting Stars (☄️) ────────────────────────
+        if (random.nextDouble() < 0.025) {
+            double startX = random.nextDouble() * (w * 0.85);
+            double startY = random.nextDouble() * (h * 0.4);
+            double speed = random.nextDouble() * 10.0 + 12.0;
+            double angle = Math.toRadians(random.nextDouble() * 25.0 + 25.0);
+            Color col = (random.nextBoolean()) ? Color.web("#38bdf8") : (random.nextBoolean() ? Color.web("#fde047") : Color.web("#c084fc"));
+            hubShootingStars.add(new HubShootingStar(
+                    startX, startY,
+                    Math.cos(angle) * speed, Math.sin(angle) * speed,
+                    random.nextDouble() * 50.0 + 40.0,
+                    random.nextDouble() * 25.0 + 20.0,
+                    col
+            ));
+        }
+
+        for (int i = hubShootingStars.size() - 1; i >= 0; i--) {
+            HubShootingStar ss = hubShootingStars.get(i);
+            ss.x += ss.vx;
+            ss.y += ss.vy;
+            ss.life--;
+            if (ss.life <= 0 || ss.x > w + 100 || ss.y > h + 100) {
+                hubShootingStars.remove(i);
+                continue;
+            }
+            double alpha = Math.max(0.0, ss.life / ss.maxLife);
+            gc.setStroke(Color.color(ss.color.getRed(), ss.color.getGreen(), ss.color.getBlue(), alpha));
+            gc.setLineWidth(2.0);
+            gc.strokeLine(ss.x, ss.y, ss.x - ss.vx * (ss.len / 12.0), ss.y - ss.vy * (ss.len / 12.0));
+        }
     }
 
-    // ─── Vertical Banner Hover Physics ───────────────────────────
+    // ─── Vertical Banner Hover Physics (Differentiated Silhouettes) ───
 
     private void setupHoverEffects() {
-        // Duel: Blue
-        setupBannerHover(duelCard, "rgba(8, 14, 40, 0.7)", "rgba(12, 24, 70, 0.95)", "#38bdf8");
-        // Story: Purple
-        setupBannerHover(storyCard, "rgba(20, 8, 35, 0.7)", "rgba(45, 15, 90, 0.95)", "#c084fc");
-        // Arcade: Red
-        setupBannerHover(arcadeCard, "rgba(30, 8, 8, 0.7)", "rgba(75, 15, 25, 0.95)", "#f87171");
-        // Quiz: Emerald
-        setupBannerHover(quizCard, "rgba(6, 25, 20, 0.7)", "rgba(10, 65, 45, 0.95)", "#34d399");
+        // Duel: Electric Blue & Cyan (Shield Shape: 28 8 28 8)
+        setupBannerHover(duelCard, "rgba(6, 16, 42, 0.78)", "rgba(10, 32, 75, 0.95)", "#38bdf8", "28 8 28 8");
+        // Story: Royal Purple (Arched Portal: 40 40 12 12)
+        setupBannerHover(storyCard, "rgba(22, 10, 42, 0.78)", "rgba(48, 18, 92, 0.95)", "#c084fc", "40 40 12 12");
+        // Arcade: Solar Gold (Dynamic Blade: 8 28 8 28)
+        setupBannerHover(arcadeCard, "rgba(36, 24, 6, 0.78)", "rgba(72, 48, 12, 0.95)", "#f59e0b", "8 28 8 28");
+        // Quiz: Astral Cyan (Mystic Pedestal: 20)
+        setupBannerHover(quizCard, "rgba(6, 28, 36, 0.78)", "rgba(12, 58, 72, 0.95)", "#22d3ee", "20");
     }
 
-    private void setupBannerHover(StackPane banner, String normalBg, String hoverBg, String accentColor) {
+    private void setupBannerHover(StackPane banner, String normalBg, String hoverBg, String accentColor, String radius) {
+        if (banner == null) return;
 
         // Setup initial default style (Base state)
-        banner.setStyle("-fx-background-color: " + normalBg + "; -fx-background-radius: 15; " +
-                "-fx-border-color: " + accentColor + "66; -fx-border-radius: 15; -fx-border-width: 2; -fx-cursor: hand; " +
-                "-fx-effect: dropshadow(gaussian, " + accentColor + "33, 15, 0, 0, 5);");
+        banner.setStyle("-fx-background-color: " + normalBg + "; -fx-background-radius: " + radius + "; " +
+                "-fx-border-color: " + accentColor + "55; -fx-border-radius: " + radius + "; -fx-border-width: 1.8; -fx-cursor: hand; " +
+                "-fx-effect: dropshadow(gaussian, " + accentColor + "33, 16, 0, 0, 4);");
 
         // Physics: Y-axis lift and slight scale up
-        TranslateTransition lift = new TranslateTransition(Duration.millis(150), banner);
-        lift.setToY(-15);
-        ScaleTransition scaleUp = new ScaleTransition(Duration.millis(150), banner);
+        TranslateTransition lift = new TranslateTransition(Duration.millis(160), banner);
+        lift.setToY(-14);
+        ScaleTransition scaleUp = new ScaleTransition(Duration.millis(160), banner);
         scaleUp.setToX(1.03); scaleUp.setToY(1.03);
 
         // Physics: Return to base
-        TranslateTransition drop = new TranslateTransition(Duration.millis(150), banner);
+        TranslateTransition drop = new TranslateTransition(Duration.millis(160), banner);
         drop.setToY(0);
-        ScaleTransition scaleDown = new ScaleTransition(Duration.millis(150), banner);
+        ScaleTransition scaleDown = new ScaleTransition(Duration.millis(160), banner);
         scaleDown.setToX(1.0); scaleDown.setToY(1.0);
 
         banner.setOnMouseEntered(e -> {
-            banner.setStyle("-fx-background-color: " + hoverBg + "; -fx-background-radius: 15; " +
-                    "-fx-border-color: " + accentColor + "; -fx-border-radius: 15; -fx-border-width: 3.5; -fx-cursor: hand; " +
-                    "-fx-effect: dropshadow(gaussian, " + accentColor + ", 45, 0.5, 0, 0);");
+            banner.setStyle("-fx-background-color: " + hoverBg + "; -fx-background-radius: " + radius + "; " +
+                    "-fx-border-color: " + accentColor + "; -fx-border-radius: " + radius + "; -fx-border-width: 3.0; -fx-cursor: hand; " +
+                    "-fx-effect: dropshadow(gaussian, " + accentColor + ", 38, 0.45, 0, 0);");
             lift.play();
             scaleUp.play();
         });
 
         banner.setOnMouseExited(e -> {
-            banner.setStyle("-fx-background-color: " + normalBg + "; -fx-background-radius: 15; " +
-                    "-fx-border-color: " + accentColor + "66; -fx-border-radius: 15; -fx-border-width: 2; -fx-cursor: hand; " +
-                    "-fx-effect: dropshadow(gaussian, " + accentColor + "33, 15, 0, 0, 5);");
+            banner.setStyle("-fx-background-color: " + normalBg + "; -fx-background-radius: " + radius + "; " +
+                    "-fx-border-color: " + accentColor + "55; -fx-border-radius: " + radius + "; -fx-border-width: 1.8; -fx-cursor: hand; " +
+                    "-fx-effect: dropshadow(gaussian, " + accentColor + "33, 16, 0, 0, 4);");
             drop.play();
             scaleDown.play();
         });
