@@ -17,79 +17,70 @@
             xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.starlore.starlore.HelloController">
    <children>
-      <!-- Background Canvas for blurred deep starry sky, nebula, and interactive celestial astrolabe -->
       <Canvas fx:id="astrolabeCanvas" height="700.0" width="950.0"
               AnchorPane.topAnchor="0.0" AnchorPane.bottomAnchor="0.0"
               AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" />
 
-      <!-- Centered Interactive Content Area -->
-      <VBox alignment="CENTER" spacing="12.0"
+      <VBox alignment="CENTER" spacing="16.0"
             AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
-            AnchorPane.topAnchor="60.0">
+            AnchorPane.topAnchor="50.0">
          <children>
-            <!-- Title Header -->
+            <!-- Heavy Cinematic Typography with Gradients & Dark Shadows -->
             <Label text="StarLore"
-                   style="-fx-font-family: 'Georgia'; -fx-font-size: 54px; -fx-font-weight: bold; -fx-text-fill: #ffffff; -fx-effect: dropshadow(gaussian, #7dd3fc, 24, 0.45, 0, 0);" />
+                   style="-fx-font-family: 'Georgia'; -fx-font-size: 72px; -fx-font-weight: bold; -fx-text-fill: linear-gradient(to bottom, #ffffff, #38bdf8); -fx-effect: dropshadow(gaussian, black, 8, 0.7, 2, 2);" />
             <Label text="CONSTELLATION CHRONICLES"
-                   style="-fx-font-family: 'Verdana'; -fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #38bdf8; -fx-letter-spacing: 5; -fx-effect: dropshadow(gaussian, #0284c7, 12, 0.3, 0, 0);" />
+                   style="-fx-font-family: 'Verdana'; -fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #bae6fd; -fx-letter-spacing: 6; -fx-effect: dropshadow(gaussian, black, 5, 0.8, 1, 1);" />
             <Label text="THE HEAVENS AWAIT YOUR NAME"
-                   style="-fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-text-fill: #94a3b8; -fx-letter-spacing: 3;" />
+                   style="-fx-font-family: 'Verdana'; -fx-font-size: 14px; -fx-text-fill: #94a3b8; -fx-letter-spacing: 4; -fx-effect: dropshadow(gaussian, black, 4, 0.8, 1, 1);" />
 
-            <!-- Spacer before hologram projection -->
-            <Pane prefHeight="10.0" />
+            <Pane prefHeight="15.0" />
 
-            <!-- Holographic Name Input Container -->
-            <StackPane alignment="CENTER" maxWidth="480.0" prefWidth="480.0">
+            <!-- Enlarged Holographic Input -->
+            <StackPane alignment="CENTER" maxWidth="540.0" prefWidth="540.0">
                <children>
                   <VBox alignment="CENTER" spacing="0.0">
                      <children>
-                        <!-- Holographic Text Field -->
-                        <TextField fx:id="nameField" alignment="CENTER" maxWidth="440.0" prefHeight="48.0"
+                        <TextField fx:id="nameField" alignment="CENTER" maxWidth="500.0" prefHeight="60.0"
                                    onAction="#checkPlayer"
                                    promptText="ENTER YOUR ASTRONOMER NAME"
-                                   style="-fx-background-color: transparent;
-                                          -fx-text-fill: #e0f2fe;
+                                   style="-fx-background-color: rgba(10, 15, 30, 0.6);
+                                          -fx-text-fill: #ffffff;
                                           -fx-font-family: 'Verdana';
-                                          -fx-font-size: 16px;
+                                          -fx-font-size: 24px;
                                           -fx-font-weight: bold;
                                           -fx-prompt-text-fill: rgba(148, 163, 184, 0.6);
-                                          -fx-border-width: 0;
-                                          -fx-padding: 0 10 4 10;
-                                          -fx-effect: dropshadow(gaussian, #38bdf8, 14, 0.4, 0, 0);" />
+                                          -fx-border-color: rgba(56, 189, 248, 0.3);
+                                          -fx-border-width: 0 0 1 0;
+                                          -fx-padding: 0 10 8 10;
+                                          -fx-effect: dropshadow(gaussian, black, 6, 0.6, 1, 1);" />
 
-                        <!-- Holographic Neon Baseline & Scanning Line -->
-                        <Pane fx:id="hologramBaseLinePane" maxWidth="440.0" prefHeight="4.0">
+                        <Pane fx:id="hologramBaseLinePane" maxWidth="500.0" prefHeight="4.0">
                            <children>
-                              <Line fx:id="neonBaseLine" startX="0.0" startY="2.0" endX="440.0" endY="2.0"
-                                    stroke="#38bdf8" strokeWidth="2.5"
+                              <Line fx:id="neonBaseLine" startX="0.0" startY="2.0" endX="500.0" endY="2.0"
+                                    stroke="#38bdf8" strokeWidth="3.0"
                                     style="-fx-effect: dropshadow(gaussian, #00f0ff, 12, 0.8, 0, 0);" />
-                              <Line fx:id="scanPulseLine" startX="0.0" startY="2.0" endX="90.0" endY="2.0"
-                                    stroke="#ffffff" strokeWidth="3.0"
+                              <Line fx:id="scanPulseLine" startX="0.0" startY="2.0" endX="100.0" endY="2.0"
+                                    stroke="#ffffff" strokeWidth="4.0"
                                     style="-fx-effect: dropshadow(gaussian, #ffffff, 15, 0.9, 0, 0);" />
                            </children>
                         </Pane>
 
-                        <!-- Holographic Sub-prompt / hint -->
                         <Label fx:id="hologramHint" text="✦ Press ENTER to project your astronomer identity ✦"
-                               style="-fx-font-family: 'Verdana'; -fx-font-size: 10.5px; -fx-text-fill: #7dd3fc; -fx-opacity: 0.8; -fx-padding: 6 0 0 0;" />
+                               style="-fx-font-family: 'Verdana'; -fx-font-size: 14px; -fx-text-fill: #7dd3fc; -fx-opacity: 0.9; -fx-padding: 12 0 0 0; -fx-effect: dropshadow(gaussian, black, 4, 0.8, 1, 1);" />
                      </children>
                   </VBox>
                </children>
             </StackPane>
 
-            <!-- Spacer above celestial orb nodes -->
-            <Pane prefHeight="16.0" />
+            <Pane prefHeight="20.0" />
 
-            <!-- Interactive Celestial Orbs Arc Container -->
-            <HBox fx:id="orbsContainer" alignment="CENTER" spacing="38.0" prefHeight="95.0">
-               <!-- Celestial Orbs are added dynamically with custom canvas rendering and hover/click effects in HelloController -->
+            <HBox fx:id="orbsContainer" alignment="CENTER" spacing="45.0" prefHeight="105.0">
+               <!-- Celestial Orbs -->
             </HBox>
 
-            <!-- Orb Faction / Lore Description Label -->
             <Label fx:id="orbLoreLabel" alignment="CENTER"
                    text="Hover over a Celestial Core to harmonize with its astral frequency"
-                   style="-fx-font-family: 'Verdana'; -fx-font-size: 12px; -fx-text-fill: #93c5fd; -fx-effect: dropshadow(gaussian, #1e3a8a, 10, 0.5, 0, 0);" />
-
+                   style="-fx-font-family: 'Verdana'; -fx-font-size: 16px; -fx-text-fill: #bae6fd; -fx-effect: dropshadow(gaussian, black, 5, 0.8, 1, 1);" />
          </children>
       </VBox>
    </children>

@@ -161,8 +161,9 @@ public class HelloController {
                 activeCoreIndex = index;
                 drawOrb(orbCanvas.getGraphicsContext2D(), core, true, 1.0);
                 orbLoreLabel.setText("✦ " + core.name + " [" + core.title + "] — " + core.element + " ✦");
-                orbLoreLabel.setStyle("-fx-font-family: 'Verdana'; -fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: "
-                        + toRgbCode(core.glowColor) + "; -fx-effect: dropshadow(gaussian, " + toRgbCode(core.primaryColor) + ", 12, 0.7, 0, 0);");
+                // Increased font to 16px and injected the orb's specific color
+                orbLoreLabel.setStyle("-fx-font-family: 'Verdana'; -fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: "
+                        + toRgbCode(core.glowColor) + "; -fx-effect: dropshadow(gaussian, black, 5, 0.8, 1, 1);");
             });
 
             orbPane.setOnMouseExited(e -> {
@@ -360,13 +361,15 @@ public class HelloController {
     private void checkPlayer() {
         String name = nameField.getText().trim();
         if (name.isEmpty()) {
-            // Flash red warning pulse on baseline if empty
             neonBaseLine.setStroke(Color.RED);
             neonBaseLine.setStyle("-fx-effect: dropshadow(gaussian, #ef4444, 18, 0.9, 0, 0);");
             hologramHint.setText("⚠ Please identify yourself, Stargazer, before initiating the portal ⚠");
-            hologramHint.setStyle("-fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-text-fill: #f87171;");
+            // Increased font to 14px for the error text
+            hologramHint.setStyle("-fx-font-family: 'Verdana'; -fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #ff8888; -fx-effect: dropshadow(gaussian, black, 4, 0.8, 1, 1);");
             return;
         }
+// ... rest of the method stays exactly the same
+// ... rest of the method
 
         try {
             if (animationTimer != null) {

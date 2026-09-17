@@ -3,79 +3,104 @@
 <?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.control.ProgressBar?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.text.Font?>
 
-<AnchorPane fx:id="rootPane" prefHeight="700.0" prefWidth="950.0"
-            style="-fx-background-color: #030514;"
-            xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1"
-            fx:controller="com.starlore.starlore.WelcomeController">
+<StackPane fx:id="rootStackPane" prefHeight="700.0" prefWidth="1000.0" style="-fx-background-color: #020308;" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.starlore.starlore.WelcomeController">
    <children>
-      <!-- Background Canvas: Massive Celestial Anchor (Fractured Moon / Eclipse), Starfield, & Mountain Observatory Silhouettes -->
-      <Canvas fx:id="gatewayCanvas" height="700.0" width="950.0"
-              AnchorPane.topAnchor="0.0" AnchorPane.bottomAnchor="0.0"
-              AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" />
+      <!-- Heavy UI Background Canvas: Digital Grids & Radar -->
+      <Canvas fx:id="gatewayCanvas" height="700.0" width="1000.0" />
 
-      <!-- Immersive Left-Aligned Cinematic Interface (Inspired by Reference Image 1) -->
-      <VBox fx:id="menuContainer" alignment="CENTER_LEFT" spacing="22.0"
-            AnchorPane.leftAnchor="80.0" AnchorPane.topAnchor="150.0" maxWidth="560.0">
+      <!-- Game-Style Overlay HUD -->
+      <VBox alignment="CENTER" pickOnBounds="false" style="-fx-padding: 30;">
          <children>
-
-            <!-- Ethereal Category Subtitle -->
-            <HBox alignment="CENTER_LEFT" spacing="10.0">
+            <!-- Top HUD Readout -->
+            <HBox alignment="CENTER" spacing="40.0" style="-fx-background-color: rgba(5, 8, 20, 0.85); -fx-padding: 10 20; -fx-border-color: rgba(56, 189, 248, 0.4); -fx-border-width: 0 0 2 0;">
                <children>
-                  <Label text="✦" style="-fx-font-size: 14px; -fx-text-fill: #38bdf8; -fx-effect: dropshadow(gaussian, #38bdf8, 10, 0.6, 0, 0);" />
-                  <Label text="THE COSMIC GATEWAY"
-                         style="-fx-font-family: 'Verdana'; -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #7dd3fc; -fx-letter-spacing: 4; -fx-effect: dropshadow(gaussian, #0284c7, 12, 0.5, 0, 0);" />
+                  <Label text="ASTRAL NET: SECURE" style="-fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #10b981; -fx-letter-spacing: 2; -fx-effect: dropshadow(gaussian, black, 4, 0.8, 1, 1);" />
+                  <Region HBox.hgrow="ALWAYS" />
+                  <Label text="[ SYS_OP_READY ]" style="-fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #94a3b8; -fx-letter-spacing: 3; -fx-effect: dropshadow(gaussian, black, 4, 0.8, 1, 1);" />
+                  <Region HBox.hgrow="ALWAYS" />
+                  <Label text="ORBITAL SYNC: NOMINAL" style="-fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #38bdf8; -fx-letter-spacing: 2; -fx-effect: dropshadow(gaussian, black, 4, 0.8, 1, 1);" />
                </children>
             </HBox>
 
-            <!-- Ethereal Typography: Welcome Message with Starlight Glow -->
-            <VBox spacing="10.0">
-               <children>
-                  <Label fx:id="welcomeLabel" wrapText="true" maxWidth="540.0"
-                         style="-fx-font-family: 'Georgia'; -fx-font-size: 38px; -fx-font-weight: bold; -fx-text-fill: #ffffff;
-                                -fx-effect: dropshadow(gaussian, #bae6fd, 22, 0.65, 0, 0); -fx-line-spacing: 4;" />
-                  <Label fx:id="subLabel" wrapText="true" maxWidth="520.0"
-                         style="-fx-font-family: 'Verdana'; -fx-font-size: 15px; -fx-text-fill: #93c5fd;
-                                -fx-effect: dropshadow(gaussian, #1e40af, 14, 0.45, 0, 0); -fx-line-spacing: 5;" />
-               </children>
-            </VBox>
+            <Region VBox.vgrow="ALWAYS" />
 
-            <!-- Spacer -->
-            <Pane prefHeight="16.0" />
-
-            <!-- The "Continue" Portal / Ancient Glowing Astral Rune Button -->
-            <StackPane fx:id="portalButtonWrapper" alignment="CENTER_LEFT">
+            <!-- Main Heavy Glass Command Console -->
+            <StackPane maxWidth="760.0" style="-fx-background-color: rgba(5, 10, 25, 0.90); -fx-background-radius: 8; -fx-border-color: linear-gradient(to bottom right, #38bdf8, #1e3a8a); -fx-border-radius: 8; -fx-border-width: 2.5; -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.9), 50, 0, 0, 10);">
                <children>
-                  <Button fx:id="journeyButton" mnemonicParsing="false" onAction="#startJourney"
-                          text="ENTER ASTRAL REALM  ➔"
-                          prefHeight="54.0" prefWidth="340.0"
-                          style="-fx-background-color: linear-gradient(to right, rgba(14, 165, 233, 0.22), rgba(99, 102, 241, 0.35));
-                                 -fx-text-fill: #ffffff;
-                                 -fx-font-family: 'Verdana';
-                                 -fx-font-size: 15px;
-                                 -fx-font-weight: bold;
-                                 -fx-letter-spacing: 2;
-                                 -fx-background-radius: 27;
-                                 -fx-border-color: #38bdf8;
-                                 -fx-border-radius: 27;
-                                 -fx-border-width: 1.8;
-                                 -fx-padding: 12 28;
-                                 -fx-cursor: hand;
-                                 -fx-effect: dropshadow(gaussian, #38bdf8, 16, 0.65, 0, 0);" />
+                  <VBox fx:id="menuContainer" alignment="CENTER" spacing="24.0" style="-fx-padding: 55;">
+                     <children>
+                        <!-- System Readout Tag -->
+                        <HBox alignment="CENTER" spacing="15.0">
+                           <children>
+                              <Label text="/// CONSTELLATION UPLINK ESTABLISHED ///" style="-fx-font-family: 'Verdana'; -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #38bdf8; -fx-letter-spacing: 4; -fx-effect: dropshadow(gaussian, black, 3, 0.8, 1, 1);" />
+                           </children>
+                        </HBox>
+
+                        <!-- Player Identity Labels -->
+                        <Label fx:id="welcomeLabel" alignment="CENTER" textAlignment="CENTER" wrapText="true"
+                               style="-fx-font-family: 'Georgia'; -fx-font-size: 46px; -fx-font-weight: bold; -fx-text-fill: #ffffff; -fx-effect: dropshadow(gaussian, black, 8, 0.8, 2, 2); -fx-line-spacing: 2;" />
+                        <Label fx:id="subLabel" alignment="CENTER" textAlignment="CENTER" wrapText="true" maxWidth="580.0"
+                               style="-fx-font-family: 'Verdana'; -fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #bae6fd; -fx-effect: dropshadow(gaussian, black, 5, 0.8, 1, 1); -fx-line-spacing: 6;" />
+
+                        <Pane prefHeight="15.0" />
+
+                        <!-- Animated Sync Progress Bar Data-Plate -->
+                        <VBox spacing="8.0" maxWidth="540.0" style="-fx-background-color: rgba(0,0,0,0.7); -fx-padding: 15 20; -fx-background-radius: 6; -fx-border-color: rgba(56, 189, 248, 0.2); -fx-border-radius: 6; -fx-effect: dropshadow(gaussian, black, 5, 0.5, 0, 2);">
+                           <children>
+                              <HBox>
+                                 <children>
+                                    <Label text="CALIBRATING ASTRAL SIGNATURE" style="-fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #94a3b8;" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <Label text="SYNC 100%" style="-fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #38bdf8;" />
+                                 </children>
+                              </HBox>
+                              <ProgressBar fx:id="syncProgressBar" progress="0.0" maxWidth="Infinity" style="-fx-accent: #38bdf8; -fx-control-inner-background: rgba(0,0,0,0.9); -fx-pref-height: 8px; -fx-border-color: rgba(255,255,255,0.15); -fx-border-radius: 2; -fx-background-radius: 2;" />
+                           </children>
+                        </VBox>
+
+                        <Pane prefHeight="20.0" />
+
+                        <!-- Massive Play Button -->
+                        <StackPane fx:id="portalButtonWrapper" alignment="CENTER">
+                           <children>
+                              <Button fx:id="journeyButton" mnemonicParsing="false" onAction="#startJourney"
+                                      text="INITIATE LINK"
+                                      prefHeight="65.0" prefWidth="480.0"
+                                      style="-fx-background-color: linear-gradient(to right, rgba(14, 165, 233, 0.35), rgba(99, 102, 241, 0.5));
+                                             -fx-text-fill: #ffffff;
+                                             -fx-font-family: 'Impact', 'Arial Black', sans-serif;
+                                             -fx-font-size: 28px;
+                                             -fx-letter-spacing: 4;
+                                             -fx-background-radius: 8;
+                                             -fx-border-color: #38bdf8;
+                                             -fx-border-radius: 8;
+                                             -fx-border-width: 2.5;
+                                             -fx-cursor: hand;
+                                             -fx-effect: dropshadow(gaussian, #38bdf8, 25, 0.5, 0, 0);" />
+                           </children>
+                        </StackPane>
+                     </children>
+                  </VBox>
                </children>
             </StackPane>
 
-            <!-- Portal Rune Glow Subtext -->
-            <Label text="✦ The ancient observatory coordinates have locked onto your constellation signature ✦"
-                   style="-fx-font-family: 'Verdana'; -fx-font-size: 10.5px; -fx-text-fill: #64748b; -fx-opacity: 0.85;" />
+            <Region VBox.vgrow="ALWAYS" />
 
+            <!-- Bottom decorative HUD -->
+            <HBox alignment="CENTER" spacing="60.0" style="-fx-padding: 10 20; -fx-background-color: rgba(5, 8, 20, 0.85); -fx-border-color: rgba(56, 189, 248, 0.4); -fx-border-width: 2 0 0 0;">
+               <children>
+                  <Label text="STARLORE V1.0.42" style="-fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #475569; -fx-letter-spacing: 2; -fx-effect: dropshadow(gaussian, black, 4, 0.8, 1, 1);" />
+                  <Label text="OBSERVATORY CORE: ONLINE" style="-fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #10b981; -fx-letter-spacing: 2; -fx-effect: dropshadow(gaussian, black, 4, 0.8, 1, 1);" />
+               </children>
+            </HBox>
          </children>
       </VBox>
    </children>
-</AnchorPane>
+</StackPane>
