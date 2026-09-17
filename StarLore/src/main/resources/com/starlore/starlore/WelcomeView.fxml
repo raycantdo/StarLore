@@ -1,17 +1,80 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
 
-<AnchorPane prefHeight="700.0" prefWidth="950.0" style="-fx-background-color: linear-gradient(#050816, #000000);" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.starlore.starlore.WelcomeController">
+<AnchorPane fx:id="rootPane" prefHeight="700.0" prefWidth="950.0"
+            style="-fx-background-color: #030514;"
+            xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.starlore.starlore.WelcomeController">
    <children>
-      <VBox alignment="CENTER" layoutX="434.0" layoutY="156.8" prefHeight="409.0" prefWidth="950.0" spacing="24.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="157.0">
+      <!-- Background Canvas: Massive Celestial Anchor (Fractured Moon / Eclipse), Starfield, & Mountain Observatory Silhouettes -->
+      <Canvas fx:id="gatewayCanvas" height="700.0" width="950.0"
+              AnchorPane.topAnchor="0.0" AnchorPane.bottomAnchor="0.0"
+              AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" />
+
+      <!-- Immersive Left-Aligned Cinematic Interface (Inspired by Reference Image 1) -->
+      <VBox fx:id="menuContainer" alignment="CENTER_LEFT" spacing="22.0"
+            AnchorPane.leftAnchor="80.0" AnchorPane.topAnchor="150.0" maxWidth="560.0">
          <children>
-            <Label fx:id="welcomeLabel" alignment="CENTER" prefHeight="94.0" prefWidth="498.0" style="-fx-font-size: 32; -fx-text-fill: white; -fx-font-weight: bold;" wrapText="true" />
-            <Label fx:id="subLabel" alignment="CENTER" prefHeight="78.0" prefWidth="406.0" style="-fx-font-size: 18; -fx-text-fill: #afc9ff;" wrapText="true" />
-            <Button fx:id="journeyButton" mnemonicParsing="false" onAction="#startJourney" prefHeight="52.0" prefWidth="480.0" style="-fx-background-color: #1a1a4e; -fx-text-fill: white; -fx-font-size: 18; -fx-padding: 12 32; -fx-font-weight: bold; -fx-background-radius: 8; -fx-border-color: #2a3580; -fx-border-radius: 8; -fx-border-width: 1.5; -fx-cursor: hand;" text="Begin Journey" />
+
+            <!-- Ethereal Category Subtitle -->
+            <HBox alignment="CENTER_LEFT" spacing="10.0">
+               <children>
+                  <Label text="✦" style="-fx-font-size: 14px; -fx-text-fill: #38bdf8; -fx-effect: dropshadow(gaussian, #38bdf8, 10, 0.6, 0, 0);" />
+                  <Label text="THE COSMIC GATEWAY"
+                         style="-fx-font-family: 'Verdana'; -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #7dd3fc; -fx-letter-spacing: 4; -fx-effect: dropshadow(gaussian, #0284c7, 12, 0.5, 0, 0);" />
+               </children>
+            </HBox>
+
+            <!-- Ethereal Typography: Welcome Message with Starlight Glow -->
+            <VBox spacing="10.0">
+               <children>
+                  <Label fx:id="welcomeLabel" wrapText="true" maxWidth="540.0"
+                         style="-fx-font-family: 'Georgia'; -fx-font-size: 38px; -fx-font-weight: bold; -fx-text-fill: #ffffff;
+                                -fx-effect: dropshadow(gaussian, #bae6fd, 22, 0.65, 0, 0); -fx-line-spacing: 4;" />
+                  <Label fx:id="subLabel" wrapText="true" maxWidth="520.0"
+                         style="-fx-font-family: 'Verdana'; -fx-font-size: 15px; -fx-text-fill: #93c5fd;
+                                -fx-effect: dropshadow(gaussian, #1e40af, 14, 0.45, 0, 0); -fx-line-spacing: 5;" />
+               </children>
+            </VBox>
+
+            <!-- Spacer -->
+            <Pane prefHeight="16.0" />
+
+            <!-- The "Continue" Portal / Ancient Glowing Astral Rune Button -->
+            <StackPane fx:id="portalButtonWrapper" alignment="CENTER_LEFT">
+               <children>
+                  <Button fx:id="journeyButton" mnemonicParsing="false" onAction="#startJourney"
+                          text="ENTER ASTRAL REALM  ➔"
+                          prefHeight="54.0" prefWidth="340.0"
+                          style="-fx-background-color: linear-gradient(to right, rgba(14, 165, 233, 0.22), rgba(99, 102, 241, 0.35));
+                                 -fx-text-fill: #ffffff;
+                                 -fx-font-family: 'Verdana';
+                                 -fx-font-size: 15px;
+                                 -fx-font-weight: bold;
+                                 -fx-letter-spacing: 2;
+                                 -fx-background-radius: 27;
+                                 -fx-border-color: #38bdf8;
+                                 -fx-border-radius: 27;
+                                 -fx-border-width: 1.8;
+                                 -fx-padding: 12 28;
+                                 -fx-cursor: hand;
+                                 -fx-effect: dropshadow(gaussian, #38bdf8, 16, 0.65, 0, 0);" />
+               </children>
+            </StackPane>
+
+            <!-- Portal Rune Glow Subtext -->
+            <Label text="✦ The ancient observatory coordinates have locked onto your constellation signature ✦"
+                   style="-fx-font-family: 'Verdana'; -fx-font-size: 10.5px; -fx-text-fill: #64748b; -fx-opacity: 0.85;" />
+
          </children>
       </VBox>
    </children>
