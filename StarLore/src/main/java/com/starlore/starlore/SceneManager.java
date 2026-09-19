@@ -28,6 +28,7 @@ public class SceneManager {
     private static double baseWidth = 950.0;
     private static double baseHeight = 700.0;
     private static double currentEffectiveWidth = 950.0;
+    private static double currentEffectiveHeight = 700.0;
 
     /**
      * Initializes the stage with full-size / maximized settings,
@@ -158,15 +159,17 @@ public class SceneManager {
 
         double scale = calculateScale(containerWidth, containerHeight, baseWidth, baseHeight);
         double effectiveWidth = calculateEffectiveWidth(containerWidth, containerHeight, baseWidth, baseHeight);
+        double effectiveHeight = calculateEffectiveHeight(containerWidth, containerHeight, baseWidth, baseHeight);
         currentEffectiveWidth = effectiveWidth;
+        currentEffectiveHeight = effectiveHeight;
 
         if (currentContent instanceof Region region) {
             region.setMinWidth(effectiveWidth);
             region.setMaxWidth(effectiveWidth);
             region.setPrefWidth(effectiveWidth);
-            region.setMinHeight(baseHeight);
-            region.setMaxHeight(baseHeight);
-            region.setPrefHeight(baseHeight);
+            region.setMinHeight(effectiveHeight);
+            region.setMaxHeight(effectiveHeight);
+            region.setPrefHeight(effectiveHeight);
         }
 
         contentGroup.setScaleX(scale);
@@ -174,7 +177,7 @@ public class SceneManager {
     }
 
     /**
-     * Calculates the scale factor based on screen height to keep element ratio 1:1.
+     * Calculates the scale factor based on screen dimensions to keep element ratio 1:1.
      */
     public static double calculateScale(double containerWidth, double containerHeight,
                                         double designWidth, double designHeight) {
@@ -198,6 +201,19 @@ public class SceneManager {
         double scale = calculateScale(containerWidth, containerHeight, designWidth, designHeight);
         if (scale <= 0) return designWidth;
         return Math.max(designWidth, containerWidth / scale);
+    }
+
+    /**
+     * Calculates the taller height required to span the container vertically with zero upper/lower gaps.
+     */
+    public static double calculateEffectiveHeight(double containerWidth, double containerHeight,
+                                                  double designWidth, double designHeight) {
+        if (containerWidth <= 0 || containerHeight <= 0 || designWidth <= 0 || designHeight <= 0) {
+            return designHeight;
+        }
+        double scale = calculateScale(containerWidth, containerHeight, designWidth, designHeight);
+        if (scale <= 0) return designHeight;
+        return Math.max(designHeight, containerHeight / scale);
     }
 
     /**
@@ -233,5 +249,9 @@ public class SceneManager {
 
     public static double getCurrentEffectiveWidth() {
         return currentEffectiveWidth;
+    }
+
+    public static double getCurrentEffectiveHeight() {
+        return currentEffectiveHeight;
     }
 }

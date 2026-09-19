@@ -102,10 +102,10 @@ public class HelloController {
     public void initialize() {
         SoundManager.playMenuMusic();
 
-        // Initialize background stars
+        // Initialize background stars across wide and tall display space
         for (int i = 0; i < NUM_BG_STARS; i++) {
-            starX[i] = random.nextDouble() * 1400;
-            starY[i] = random.nextDouble() * 700;
+            starX[i] = random.nextDouble() * 2200;
+            starY[i] = random.nextDouble() * 1400;
             starR[i] = random.nextDouble() * 2.8 + 1.0;
             starAlpha[i] = random.nextDouble() * 0.4 + 0.15;
         }
@@ -567,7 +567,7 @@ public class HelloController {
         gc.setLineWidth(1.2);
         gc.setStroke(Color.rgb(56, 189, 248, 0.5));
         double startX = dialCenterX - 180;
-        double startY = 460;
+        double startY = dialCenterY - 30;
         for (int i = 0; i < 4; i++) {
             double segX1 = startX + i * 90;
             double segY1 = startY + Math.sin((i / 4.0) * Math.PI) * -18;
@@ -610,6 +610,7 @@ public class HelloController {
             }
 
             Player player = playerDAO.checkOrCreatePlayer(name);
+            OnlineSessionManager.getInstance().login(player.getUsername());
 
             FXMLLoader loader = new FXMLLoader(getClass().getResource("WelcomeView.fxml"));
             Parent root = loader.load();

@@ -13,4 +13,8 @@ public class HelloApplication extends Application {
         FXMLLoader fxmlLoader = new FXMLLoader(HelloApplication.class.getResource("SplashView.fxml"));
         SceneManager.init(stage, fxmlLoader.load());
     }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
 }

@@ -3,6 +3,8 @@
 <?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
@@ -73,12 +75,13 @@
 
                         <Label fx:id="constellationDescLabel" text="Connect the stars to awaken this celestial constellation." style="-fx-font-family: 'Verdana'; -fx-font-size: 12px; -fx-text-fill: #cbd5e1; -fx-wrap-text: true; -fx-text-alignment: center;" />
 
-                        <HBox alignment="CENTER" spacing="16.0">
-                           <children>
-                              <Button fx:id="friendsModeBtn" onAction="#startFriendsMode" text="👥 Play with Friends" style="-fx-background-color: linear-gradient(to right, #0284c7, #0369a1); -fx-text-fill: white; -fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 13px; -fx-padding: 10 22; -fx-background-radius: 20; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(2, 132, 199, 0.4), 10, 0, 0, 2);" />
-                              <Button fx:id="aiModeBtn" onAction="#startAiMode" text="🤖 Play with AI" style="-fx-background-color: linear-gradient(to right, #7c3aed, #6d28d9); -fx-text-fill: white; -fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 13px; -fx-padding: 10 24; -fx-background-radius: 20; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(124, 58, 237, 0.5), 10, 0, 0, 2);" />
-                           </children>
-                        </HBox>
+                         <HBox alignment="CENTER" spacing="12.0">
+                            <children>
+                               <Button fx:id="serverLobbyBtn" onAction="#openServerLobby" text="🌐 Online Lobby" style="-fx-background-color: linear-gradient(to right, #059669, #10b981); -fx-text-fill: white; -fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 12px; -fx-padding: 10 18; -fx-background-radius: 20; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(16, 185, 129, 0.45), 10, 0, 0, 2);" />
+                               <Button fx:id="friendsModeBtn" onAction="#startFriendsMode" text="👥 Friends (P2P)" style="-fx-background-color: linear-gradient(to right, #0284c7, #0369a1); -fx-text-fill: white; -fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 12px; -fx-padding: 10 18; -fx-background-radius: 20; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(2, 132, 199, 0.4), 10, 0, 0, 2);" />
+                               <Button fx:id="aiModeBtn" onAction="#startAiMode" text="🤖 Play with AI" style="-fx-background-color: linear-gradient(to right, #7c3aed, #6d28d9); -fx-text-fill: white; -fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 12px; -fx-padding: 10 18; -fx-background-radius: 20; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(124, 58, 237, 0.5), 10, 0, 0, 2);" />
+                            </children>
+                         </HBox>
 
                         <Label text="Drag map in any direction to explore the night sky" style="-fx-font-family: 'Verdana'; -fx-font-size: 10px; -fx-text-fill: #64748b;" />
                      </children>
@@ -97,6 +100,7 @@
                      <children>
                         <Label fx:id="player1TagLabel" text="✦ YOU" style="-fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #38bdf8;" />
                         <Label fx:id="playerScoreLabel" text="Score: 0" style="-fx-font-family: 'Verdana'; -fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: white;" />
+                        <Label fx:id="playerProgressLabel" text="★ 0 Stars Connected" style="-fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #38bdf8;" />
                      </children>
                   </VBox>
                   <VBox alignment="CENTER" HBox.hgrow="ALWAYS">
@@ -110,6 +114,7 @@
                      <children>
                         <Label fx:id="opponentTagLabel" text="✦ AI" style="-fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #c084fc;" />
                         <Label fx:id="aiScoreLabel" text="Score: 0" style="-fx-font-family: 'Verdana'; -fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: white;" />
+                        <Label fx:id="opponentProgressLabel" text="★ 0 Stars Connected" style="-fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #fbbf24;" />
                      </children>
                   </VBox>
                </children>
@@ -155,6 +160,135 @@
                         <Button onAction="#backToHub" text="🏠 Back to Hub" style="-fx-background-color: #1e293b; -fx-text-fill: white; -fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10 24; -fx-background-radius: 18; -fx-cursor: hand;" />
                      </children>
                   </HBox>
+               </children>
+            </VBox>
+         </children>
+      </StackPane>
+
+      <!-- LAYER 4: Online Duel Server Lobby Overlay -->
+      <StackPane fx:id="serverLobbyOverlay" visible="false" style="-fx-background-color: rgba(2, 6, 23, 0.88);">
+         <children>
+            <VBox alignment="CENTER" maxWidth="660.0" maxHeight="600.0" spacing="14.0" style="-fx-background-color: linear-gradient(to bottom right, rgba(8, 18, 48, 0.97), rgba(3, 8, 24, 0.98)); -fx-background-radius: 24; -fx-border-color: linear-gradient(to bottom right, #38bdf8, #818cf8, #34d399); -fx-border-radius: 24; -fx-border-width: 1.8; -fx-padding: 22 30; -fx-effect: dropshadow(gaussian, rgba(56, 189, 248, 0.38), 32, 0.25, 0, 4);">
+               <children>
+                  <!-- Header with Title & Player Identity Pill -->
+                  <HBox alignment="CENTER_LEFT" spacing="12.0">
+                     <children>
+                        <Label text="✦ CELESTIAL DUEL LOBBY ✦" style="-fx-font-family: 'Verdana'; -fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #ffd65a; -fx-effect: dropshadow(gaussian, rgba(245, 158, 11, 0.5), 10, 0, 0, 1);" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <HBox alignment="CENTER" spacing="6.0" style="-fx-background-color: rgba(14, 165, 233, 0.15); -fx-background-radius: 14; -fx-border-color: rgba(56, 189, 248, 0.4); -fx-border-radius: 14; -fx-border-width: 1; -fx-padding: 4 12;">
+                           <children>
+                              <Label text="👤" style="-fx-font-size: 11px;" />
+                              <Label fx:id="myOnlineTagLabel" text="✦ Logged in: YOU" style="-fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #38bdf8;" />
+                           </children>
+                        </HBox>
+                        <Button onAction="#closeServerLobby" text="✕" style="-fx-background-color: rgba(15, 23, 42, 0.6); -fx-background-radius: 20; -fx-text-fill: #94a3b8; -fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 4 10; -fx-cursor: hand;" />
+                     </children>
+                  </HBox>
+
+                  <!-- Live Server Connection Status & Constellation Arena Banner -->
+                  <HBox alignment="CENTER_LEFT" spacing="12.0" style="-fx-background-color: rgba(15, 23, 42, 0.75); -fx-padding: 8 16; -fx-background-radius: 12; -fx-border-color: rgba(56, 189, 248, 0.2); -fx-border-radius: 12; -fx-border-width: 1;">
+                     <children>
+                        <Label text="Arena:" style="-fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #38bdf8;" />
+                        <Label fx:id="lobbyConstellationLabel" text="ARIES (4 Stars)" style="-fx-font-family: 'Verdana'; -fx-font-size: 11.5px; -fx-text-fill: #ffd65a; -fx-font-weight: bold;" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Label fx:id="serverStatusLabel" text="🟢 Connected to Cosmos" style="-fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #34d399;" />
+                     </children>
+                  </HBox>
+
+                  <!-- Online Stargazers List with Clear Instructions -->
+                  <VBox spacing="6.0" VBox.vgrow="ALWAYS">
+                     <children>
+                        <HBox alignment="CENTER_LEFT">
+                           <children>
+                              <Label text="Online Stargazers Ready for Versus Duel:" style="-fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #cbd5e1;" />
+                              <Region HBox.hgrow="ALWAYS" />
+                              <Label text="👉 Click CHALLENGE on any stargazer to duel" style="-fx-font-family: 'Verdana'; -fx-font-size: 10.5px; -fx-text-fill: #38bdf8;" />
+                           </children>
+                        </HBox>
+                        <ListView fx:id="serverUsersListView" prefHeight="230.0" style="-fx-background-color: rgba(10, 18, 38, 0.7); -fx-control-inner-background: rgba(10, 18, 38, 0.7); -fx-background-radius: 14; -fx-border-color: rgba(56, 189, 248, 0.22); -fx-border-radius: 14; -fx-padding: 6;" VBox.vgrow="ALWAYS" />
+                     </children>
+                  </VBox>
+
+                  <!-- Bottom Actions -->
+                  <HBox alignment="CENTER" spacing="16.0">
+                     <children>
+                        <Button fx:id="challengePlayerBtn" onAction="#challengeSelectedPlayer" text="⚔️ Challenge to Duel" style="-fx-background-color: linear-gradient(to right, #059669, #10b981); -fx-text-fill: white; -fx-font-family: 'Verdana'; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 10 26; -fx-background-radius: 20; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(16, 185, 129, 0.5), 12, 0, 0, 2);" />
+                        <Button onAction="#refreshServerUsers" text="⟳ Refresh" style="-fx-background-color: rgba(30, 41, 59, 0.9); -fx-text-fill: #e2e8f0; -fx-font-family: 'Verdana'; -fx-font-size: 12px; -fx-padding: 10 20; -fx-background-radius: 20; -fx-border-color: rgba(148, 163, 184, 0.25); -fx-border-radius: 20; -fx-cursor: hand;" />
+                        <Button onAction="#closeServerLobby" text="Cancel" style="-fx-background-color: transparent; -fx-text-fill: #94a3b8; -fx-font-family: 'Verdana'; -fx-font-size: 12px; -fx-padding: 10 16; -fx-cursor: hand;" />
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+         </children>
+      </StackPane>
+
+      <!-- LAYER 5: In-Scene Incoming Challenge Modal (Active Player Screen) -->
+      <StackPane fx:id="incomingChallengeOverlay" visible="false" style="-fx-background-color: rgba(2, 6, 23, 0.92);">
+         <children>
+            <VBox alignment="CENTER" maxWidth="520.0" spacing="18.0" style="-fx-background-color: linear-gradient(to bottom right, rgba(14, 23, 56, 0.98), rgba(3, 8, 24, 0.98)); -fx-background-radius: 24; -fx-border-color: linear-gradient(to bottom right, #ffd65a, #38bdf8, #10b981); -fx-border-radius: 24; -fx-border-width: 2.2; -fx-padding: 30 36; -fx-effect: dropshadow(gaussian, rgba(56, 189, 248, 0.45), 36, 0.3, 0, 4);">
+               <children>
+                  <Label text="✦ CELESTIAL DUEL INVITATION ✦" style="-fx-font-family: 'Verdana'; -fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #ffd65a; -fx-letter-spacing: 2; -fx-effect: dropshadow(gaussian, rgba(245, 158, 11, 0.6), 10, 0, 0, 1);" />
+
+                  <!-- Challenger Avatar Orb & Name -->
+                  <HBox alignment="CENTER" spacing="14.0">
+                     <children>
+                        <StackPane prefHeight="50.0" prefWidth="50.0">
+                           <children>
+                              <Label text="⚔️" style="-fx-font-size: 30px; -fx-effect: dropshadow(gaussian, #38bdf8, 12, 0.4, 0, 0);" />
+                           </children>
+                        </StackPane>
+                        <VBox alignment="CENTER_LEFT" spacing="2.0">
+                           <children>
+                              <Label fx:id="incomingChallengerLabel" text="Stargazer Raya" style="-fx-font-family: 'Verdana'; -fx-font-size: 19px; -fx-font-weight: bold; -fx-text-fill: white;" />
+                              <Label text="has challenged you to a live Versus Duel!" style="-fx-font-family: 'Verdana'; -fx-font-size: 12px; -fx-text-fill: #38bdf8;" />
+                           </children>
+                        </VBox>
+                     </children>
+                  </HBox>
+
+                  <!-- Arena Info Box -->
+                  <VBox alignment="CENTER" spacing="4.0" style="-fx-background-color: rgba(30, 41, 59, 0.5); -fx-padding: 10 20; -fx-background-radius: 12; -fx-border-color: rgba(56, 189, 248, 0.25); -fx-border-radius: 12;">
+                     <children>
+                        <Label fx:id="incomingArenaLabel" text="✦ Arena: ARIES (4 Stars Arena) ✦" style="-fx-font-family: 'Verdana'; -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #fcd34d;" />
+                        <Label text="Race simultaneously to connect the stars! First to complete wins." style="-fx-font-family: 'Verdana'; -fx-font-size: 10.5px; -fx-text-fill: #94a3b8;" />
+                     </children>
+                  </VBox>
+
+                  <!-- Accept / Decline Action Buttons -->
+                  <HBox alignment="CENTER" spacing="18.0">
+                     <children>
+                        <Button fx:id="acceptChallengeBtn" onAction="#acceptIncomingChallenge" text="⚔️ ACCEPT DUEL" style="-fx-background-color: linear-gradient(to right, #059669, #10b981); -fx-text-fill: white; -fx-font-family: 'Verdana'; -fx-font-size: 14px; -fx-font-weight: bold; -fx-padding: 12 32; -fx-background-radius: 22; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(16, 185, 129, 0.6), 14, 0, 0, 2);" />
+                        <Button fx:id="declineChallengeBtn" onAction="#declineIncomingChallenge" text="✕ Decline" style="-fx-background-color: rgba(30, 41, 59, 0.85); -fx-text-fill: #f87171; -fx-font-family: 'Verdana'; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 12 24; -fx-background-radius: 22; -fx-border-color: rgba(239, 68, 68, 0.4); -fx-border-radius: 22; -fx-cursor: hand;" />
+                     </children>
+                  </HBox>
+               </children>
+            </VBox>
+         </children>
+      </StackPane>
+
+      <!-- LAYER 6: In-Scene Outgoing Challenge Waiting Modal -->
+      <StackPane fx:id="waitingChallengeOverlay" visible="false" style="-fx-background-color: rgba(2, 6, 23, 0.90);">
+         <children>
+            <VBox alignment="CENTER" maxWidth="480.0" spacing="18.0" style="-fx-background-color: linear-gradient(to bottom right, rgba(10, 18, 48, 0.98), rgba(2, 6, 20, 0.98)); -fx-background-radius: 24; -fx-border-color: linear-gradient(to bottom right, #38bdf8, #818cf8); -fx-border-radius: 24; -fx-border-width: 2; -fx-padding: 30 36; -fx-effect: dropshadow(gaussian, rgba(56, 189, 248, 0.4), 32, 0.25, 0, 4);">
+               <children>
+                  <Label text="✦ CHALLENGE DISPATCHED ✦" style="-fx-font-family: 'Verdana'; -fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #38bdf8; -fx-letter-spacing: 2;" />
+                  <Label fx:id="waitingTargetLabel" text="Waiting for Tasnim to respond..." style="-fx-font-family: 'Verdana'; -fx-font-size: 17px; -fx-font-weight: bold; -fx-text-fill: white;" />
+                  <Label fx:id="waitingArenaLabel" text="Arena: ARIES (4 Stars)" style="-fx-font-family: 'Verdana'; -fx-font-size: 12px; -fx-text-fill: #ffd65a;" />
+                  <Label text="✦ Starlight connection awaiting response across the cosmos... ✦" style="-fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-text-fill: #94a3b8;" />
+                  <Button onAction="#cancelOutgoingChallenge" text="✕ Cancel Invitation" style="-fx-background-color: rgba(30, 41, 59, 0.9); -fx-text-fill: #cbd5e1; -fx-font-family: 'Verdana'; -fx-font-size: 12px; -fx-padding: 10 24; -fx-background-radius: 18; -fx-border-color: rgba(148, 163, 184, 0.3); -fx-border-radius: 18; -fx-cursor: hand;" />
+               </children>
+            </VBox>
+         </children>
+      </StackPane>
+
+      <!-- LAYER 7: In-Scene Celestial Notice Overlay (Declined / Disconnected) -->
+      <StackPane fx:id="challengeNoticeOverlay" visible="false" style="-fx-background-color: rgba(2, 6, 23, 0.88);">
+         <children>
+            <VBox alignment="CENTER" maxWidth="460.0" spacing="16.0" style="-fx-background-color: linear-gradient(to bottom right, rgba(16, 24, 52, 0.98), rgba(4, 10, 26, 0.98)); -fx-background-radius: 22; -fx-border-color: #38bdf8; -fx-border-radius: 22; -fx-border-width: 1.6; -fx-padding: 26 34; -fx-effect: dropshadow(gaussian, rgba(56, 189, 248, 0.35), 28, 0.2, 0, 3);">
+               <children>
+                  <Label fx:id="noticeTitleLabel" text="✦ CHALLENGE NOTICE ✦" style="-fx-font-family: 'Verdana'; -fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #ffd65a;" />
+                  <Label fx:id="noticeMessageLabel" text="Stargazer declined the duel invitation." textAlignment="CENTER" wrapText="true" style="-fx-font-family: 'Verdana'; -fx-font-size: 13px; -fx-text-fill: #f1f5f9;" />
+                  <Button onAction="#dismissChallengeNotice" text="✦ Continue" style="-fx-background-color: linear-gradient(to right, #0284c7, #0369a1); -fx-text-fill: white; -fx-font-family: 'Verdana'; -fx-font-size: 12.5px; -fx-font-weight: bold; -fx-padding: 9 26; -fx-background-radius: 18; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(2, 132, 199, 0.4), 8, 0, 0, 1);" />
                </children>
             </VBox>
          </children>

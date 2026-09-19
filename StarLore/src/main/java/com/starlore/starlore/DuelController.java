@@ -27,10 +27,19 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.util.*;
+import java.io.IOException;
 import javafx.concurrent.Task;
+import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.shape.Circle;
 
 /**
  * DuelController manages:
@@ -53,17 +62,43 @@ public class DuelController {
     @FXML private Label constellationDescLabel;
     @FXML private Button friendsModeBtn;
     @FXML private Button aiModeBtn;
+    @FXML private Button serverLobbyBtn;
+
+    // ─── FXML Server Lobby Elements ─────────────────────────────
+    @FXML private StackPane serverLobbyOverlay;
+    @FXML private Label serverStatusLabel;
+    @FXML private Label lobbyConstellationLabel;
+    @FXML private ListView<String> serverUsersListView;
+    @FXML private Button challengePlayerBtn;
+    @FXML private Label myOnlineTagLabel;
+
+    // ─── FXML In-Scene Celestial Challenge Overlays ─────────────
+    @FXML private StackPane incomingChallengeOverlay;
+    @FXML private Label incomingChallengerLabel;
+    @FXML private Label incomingArenaLabel;
+    @FXML private Button acceptChallengeBtn;
+    @FXML private Button declineChallengeBtn;
+
+    @FXML private StackPane waitingChallengeOverlay;
+    @FXML private Label waitingTargetLabel;
+    @FXML private Label waitingArenaLabel;
+
+    @FXML private StackPane challengeNoticeOverlay;
+    @FXML private Label noticeTitleLabel;
+    @FXML private Label noticeMessageLabel;
 
     // ─── FXML Duel Game Elements ────────────────────────────────
     @FXML private BorderPane gamePane;
     @FXML private Label player1TagLabel;
     @FXML private Label playerScoreLabel;
+    @FXML private Label playerProgressLabel;
     @FXML private Label duelConstellationNameLabel;
     @FXML private Label timerLabel;
     @FXML private Label turnIndicatorLabel;
     @FXML private VBox opponentHeader;
     @FXML private Label opponentTagLabel;
     @FXML private Label aiScoreLabel;
+    @FXML private Label opponentProgressLabel;
     @FXML private Canvas playerCanvas;
     @FXML private VBox versusDivider;
     @FXML private StackPane opponentBoard;
@@ -141,6 +176,7 @@ public class DuelController {
     private boolean isPlayer1Turn = true;
     private boolean duelActive = false;
     private int selectedStarIdx = -1;
+    private int selectedStarIdxP2 = -1;
     private int player1Score = 0;
     private int player2OrAiScore = 0;
     private int timeLeft = 30;
@@ -152,10 +188,20 @@ public class DuelController {
     private Timeline duelTimer;
     private Timeline aiTimer;
     private final Random random = new Random();
-    // ─── Networked Friends Mode ──────────────────────────────────
+    // ─── Networked Friends Mode (P2P) ───────────────────────────
     private NetworkManager network;
     private boolean isHost;
     private boolean isNetworked = false;
+
+    // ─── Socket Server Online Duel Mode ──────────────────────────
+    private DuelSocketClient duelSocketClient;
+    private boolean isServerMode = false;
+    private String remoteOpponentName;
+    private final Set<String> serverOnlineUsers = new HashSet<>();
+    private String pendingChallenger = "";
+    private String pendingConstellation = "";
+    private String outgoingTarget = "";
+    private DuelSocketClient.DuelListener duelSocketListener;
 
     // ─── Initialization ─────────────────────────────────────────
 
@@ -170,15 +216,21 @@ public class DuelController {
 
         setupMapInteractions();
         setupCanvasBinding();
+        setupServerLobbyListCell();
+        setupOnlineSession();
         startMapAnimation();
         updateSelectionCard();
     }
 
     public void setPlayer(Player player) {
         this.currentPlayer = player;
+        if (player != null && player.getUsername() != null && !player.getUsername().trim().isEmpty()) {
+            OnlineSessionManager.getInstance().login(player.getUsername());
+        }
         updateHud();
         updateSelectionCard();
         drawMap();
+        updateOnlineFriendsList();
     }
 
     private void updateHud() {
@@ -197,6 +249,9 @@ public class DuelController {
         }
         if (playerCanvas != null) {
             playerCanvas.setOnMouseClicked(this::onPlayerCanvasClick);
+        }
+        if (aiCanvas != null) {
+            aiCanvas.setOnMouseClicked(this::onAiCanvasClick);
         }
     }
 
@@ -726,12 +781,382 @@ public class DuelController {
         g.restore();
     }
 
+    // ─── Socket Server Online Lobby & Matchmaking ───────────────
+
+    private void setupOnlineSession() {
+        duelSocketListener = new DuelSocketClient.DuelListener() {
+            @Override
+            public void onOnlineUsers(List<String> onlineUsernames) {
+                serverOnlineUsers.clear();
+                serverOnlineUsers.addAll(onlineUsernames);
+                updateOnlineFriendsList();
+            }
+
+            @Override
+            public void onDuelInvite(String fromUser, String constellation) {
+                handleIncomingChallenge(fromUser, constellation);
+            }
+
+            @Override
+            public void onDuelAccepted(String fromUser, String constellation) {
+                handleChallengeAccepted(fromUser, constellation);
+            }
+
+            @Override
+            public void onDuelDeclined(String fromUser) {
+                handleChallengeDeclined(fromUser);
+            }
+
+            @Override
+            public void onRemoteLink(String fromUser, int starA, int starB) {
+                applyRemoteLink(starA, starB);
+            }
+
+            @Override
+            public void onRematch(String fromUser) {
+                if (resultOverlay != null) resultOverlay.setVisible(false);
+                launchDuelGame(currentDuelDef);
+            }
+
+            @Override
+            public void onOpponentLeft(String fromUser) {
+                if (turnIndicatorLabel != null) {
+                    turnIndicatorLabel.setText(fromUser + " left the match.");
+                }
+                duelActive = false;
+                if (duelTimer != null) duelTimer.stop();
+                showChallengeNotice("✦ OPPONENT DEPARTED ✦", "Stargazer " + fromUser + " has left the match.");
+            }
+
+            @Override
+            public void onDisconnected() {
+                if (serverStatusLabel != null) {
+                    serverStatusLabel.setText("⚪ Offline / Reconnecting...");
+                    serverStatusLabel.setStyle("-fx-text-fill: #94a3b8; -fx-font-family: 'Verdana'; -fx-font-size: 11px;");
+                }
+            }
+        };
+
+        OnlineSessionManager.getInstance().setActiveListener(duelSocketListener);
+    }
+
+    private void setupServerLobbyListCell() {
+        if (serverUsersListView == null) return;
+
+        // Ethereal Empty Placeholder
+        VBox emptyBox = new VBox(10);
+        emptyBox.setAlignment(Pos.CENTER);
+        Label emptyIcon = new Label("🔭");
+        emptyIcon.setStyle("-fx-font-size: 38px; -fx-effect: dropshadow(gaussian, rgba(56, 189, 248, 0.5), 14, 0, 0, 0);");
+        Label emptyTitle = new Label("NO OTHER STARGAZERS ONLINE");
+        emptyTitle.setStyle("-fx-font-family: 'Verdana'; -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #94a3b8; -fx-letter-spacing: 2;");
+        Label emptySub = new Label("Invite a friend to log into StarLore, and they will appear here live!");
+        emptySub.setStyle("-fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-text-fill: #64748b;");
+        emptyBox.getChildren().addAll(emptyIcon, emptyTitle, emptySub);
+        serverUsersListView.setPlaceholder(emptyBox);
+
+        serverUsersListView.setCellFactory(list -> new ListCell<String>() {
+            @Override
+            protected void updateItem(String username, boolean empty) {
+                super.updateItem(username, empty);
+                if (empty || username == null) {
+                    setGraphic(null);
+                    setText(null);
+                    setStyle("-fx-background-color: transparent; -fx-padding: 3;");
+                    return;
+                }
+
+                // 1. Avatar Orb with User Initial and Glow
+                StackPane avatarPane = new StackPane();
+                avatarPane.setPrefSize(42, 42);
+                avatarPane.setMaxSize(42, 42);
+
+                Circle avatarCircle = new Circle(20);
+                avatarCircle.setFill(new LinearGradient(
+                        0, 0, 1, 1, true, CycleMethod.NO_CYCLE,
+                        new Stop(0.0, Color.web("#0284c7")),
+                        new Stop(0.5, Color.web("#6366f1")),
+                        new Stop(1.0, Color.web("#8b5cf6"))
+                ));
+                avatarCircle.setStroke(Color.web("#38bdf8", 0.75));
+                avatarCircle.setStrokeWidth(1.8);
+
+                String initial = (username.length() > 0) ? username.substring(0, 1).toUpperCase() : "✦";
+                Label initialLabel = new Label(initial);
+                initialLabel.setStyle("-fx-font-family: 'Georgia'; -fx-font-size: 17px; -fx-font-weight: bold; -fx-text-fill: white; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.8), 4, 0, 1, 1);");
+
+                // Tiny bright green live indicator dot in bottom right
+                Circle liveDot = new Circle(5);
+                liveDot.setFill(Color.web("#10b981"));
+                liveDot.setStroke(Color.web("#020617"));
+                liveDot.setStrokeWidth(1.5);
+                StackPane.setAlignment(liveDot, Pos.BOTTOM_RIGHT);
+
+                avatarPane.getChildren().addAll(avatarCircle, initialLabel, liveDot);
+
+                // 2. Info Column (Name & Status)
+                VBox infoBox = new VBox(2);
+                infoBox.setAlignment(Pos.CENTER_LEFT);
+
+                Label nameLabel = new Label(username);
+                nameLabel.setStyle("-fx-font-family: 'Verdana'; -fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #f8fafc;");
+
+                Label statusLabel = new Label("✦ Celestial Challenger • Online");
+                statusLabel.setStyle("-fx-font-family: 'Verdana'; -fx-font-size: 10px; -fx-text-fill: #38bdf8;");
+                infoBox.getChildren().addAll(nameLabel, statusLabel);
+
+                // 3. Direct Clickable Challenge Button on Row
+                Button challengeRowBtn = new Button("⚔️ CHALLENGE");
+                challengeRowBtn.setStyle("-fx-background-color: linear-gradient(to right, #059669, #10b981); -fx-text-fill: white; -fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-font-weight: bold; -fx-background-radius: 14; -fx-padding: 6 14; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(16, 185, 129, 0.45), 8, 0, 0, 1);");
+                challengeRowBtn.setOnAction(e -> {
+                    e.consume();
+                    serverUsersListView.getSelectionModel().select(username);
+                    initiateChallenge(username);
+                });
+
+                Region spacer = new Region();
+                HBox.setHgrow(spacer, Priority.ALWAYS);
+
+                // 4. Outer Card Container
+                HBox card = new HBox(14, avatarPane, infoBox, spacer, challengeRowBtn);
+                card.setAlignment(Pos.CENTER_LEFT);
+                card.setStyle("-fx-background-color: rgba(15, 23, 42, 0.7); -fx-background-radius: 14; -fx-border-color: rgba(56, 189, 248, 0.22); -fx-border-radius: 14; -fx-border-width: 1.2; -fx-padding: 8 16; -fx-cursor: hand;");
+
+                if (isSelected()) {
+                    card.setStyle("-fx-background-color: linear-gradient(to right, rgba(14, 165, 233, 0.35), rgba(99, 102, 241, 0.35)); -fx-background-radius: 14; -fx-border-color: #38bdf8; -fx-border-radius: 14; -fx-border-width: 1.8; -fx-padding: 8 16; -fx-effect: dropshadow(gaussian, rgba(56, 189, 248, 0.5), 14, 0.2, 0, 0);");
+                }
+
+                card.setOnMouseEntered(e -> {
+                    if (!isSelected()) {
+                        card.setStyle("-fx-background-color: rgba(28, 52, 98, 0.8); -fx-background-radius: 14; -fx-border-color: #38bdf8; -fx-border-radius: 14; -fx-border-width: 1.2; -fx-padding: 8 16; -fx-effect: dropshadow(gaussian, rgba(56, 189, 248, 0.35), 8, 0, 0, 0); -fx-cursor: hand;");
+                    }
+                });
+                card.setOnMouseExited(e -> {
+                    if (!isSelected()) {
+                        card.setStyle("-fx-background-color: rgba(15, 23, 42, 0.7); -fx-background-radius: 14; -fx-border-color: rgba(56, 189, 248, 0.22); -fx-border-radius: 14; -fx-border-width: 1.2; -fx-padding: 8 16; -fx-cursor: hand;");
+                    }
+                });
+
+                card.setOnMouseClicked(e -> {
+                    if (e.getClickCount() == 2) {
+                        initiateChallenge(username);
+                    }
+                });
+
+                setGraphic(card);
+                setText(null);
+                setStyle("-fx-background-color: transparent; -fx-padding: 4 2;");
+            }
+        });
+
+        serverUsersListView.getSelectionModel().selectedItemProperty().addListener((obs, oldV, newV) -> {
+            if (challengePlayerBtn != null) {
+                if (newV != null && !newV.isEmpty()) {
+                    challengePlayerBtn.setText("⚔️ CHALLENGE " + newV.toUpperCase());
+                    challengePlayerBtn.setDisable(false);
+                    challengePlayerBtn.setStyle("-fx-background-color: linear-gradient(to right, #059669, #10b981); -fx-text-fill: white; -fx-font-family: 'Verdana'; -fx-font-size: 13px; -fx-font-weight: bold; -fx-padding: 10 26; -fx-background-radius: 20; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(16, 185, 129, 0.6), 14, 0, 0, 2);");
+                } else {
+                    challengePlayerBtn.setText("👉 Click CHALLENGE on any Stargazer above");
+                    challengePlayerBtn.setDisable(true);
+                    challengePlayerBtn.setStyle("-fx-background-color: rgba(30, 41, 59, 0.6); -fx-text-fill: #94a3b8; -fx-font-family: 'Verdana'; -fx-font-size: 12px; -fx-padding: 10 24; -fx-background-radius: 20;");
+                }
+            }
+        });
+    }
+
+    private void updateOnlineFriendsList() {
+        if (serverUsersListView == null) return;
+        String myName = (currentPlayer != null && currentPlayer.getUsername() != null)
+                ? currentPlayer.getUsername().trim() : "";
+
+        List<String> friendsOnly = new ArrayList<>();
+        for (String user : serverOnlineUsers) {
+            if (!user.equalsIgnoreCase(myName)) {
+                friendsOnly.add(user);
+            }
+        }
+
+        serverUsersListView.getItems().setAll(friendsOnly);
+        serverUsersListView.refresh();
+
+        if (serverStatusLabel != null) {
+            int friendCount = friendsOnly.size();
+            serverStatusLabel.setText("🟢 " + (friendCount == 0 ? "Connected (You are online)" : friendCount + (friendCount == 1 ? " Stargazer Online" : " Stargazers Online")));
+            serverStatusLabel.setStyle("-fx-text-fill: #34d399; -fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 11px;");
+        }
+
+        if (myOnlineTagLabel != null) {
+            myOnlineTagLabel.setText("✦ Logged in: " + (myName.isEmpty() ? "Guest" : myName.toUpperCase()));
+        }
+
+        if (challengePlayerBtn != null) {
+            String sel = serverUsersListView.getSelectionModel().getSelectedItem();
+            if (sel != null && !sel.isEmpty()) {
+                challengePlayerBtn.setText("⚔️ CHALLENGE " + sel.toUpperCase());
+                challengePlayerBtn.setDisable(false);
+            } else {
+                challengePlayerBtn.setText("👉 Click CHALLENGE on any Stargazer above");
+                challengePlayerBtn.setDisable(true);
+            }
+        }
+    }
+
+    @FXML
+    private void openServerLobby() {
+        if (lobbyConstellationLabel != null) {
+            String cName = (selectedDef != null) ? selectedDef.name : "ARIES";
+            int starsCount = (selectedDef != null) ? selectedDef.stars.length : 4;
+            lobbyConstellationLabel.setText(cName + " (" + starsCount + " Stars Arena)");
+        }
+
+        if (currentPlayer != null && currentPlayer.getUsername() != null && !OnlineSessionManager.getInstance().isConnected()) {
+            OnlineSessionManager.getInstance().login(currentPlayer.getUsername());
+        }
+
+        updateOnlineFriendsList();
+        if (serverLobbyOverlay != null) {
+            serverLobbyOverlay.setVisible(true);
+        }
+    }
+
+    @FXML
+    private void closeServerLobby() {
+        if (serverLobbyOverlay != null) {
+            serverLobbyOverlay.setVisible(false);
+        }
+    }
+
+    @FXML
+    private void refreshServerUsers() {
+        if (!OnlineSessionManager.getInstance().isConnected() && currentPlayer != null) {
+            OnlineSessionManager.getInstance().login(currentPlayer.getUsername());
+        }
+        updateOnlineFriendsList();
+    }
+
+    public void initiateChallenge(String targetUser) {
+        String myName = (currentPlayer != null && currentPlayer.getUsername() != null)
+                ? currentPlayer.getUsername().trim() : "";
+        if (targetUser == null || targetUser.equalsIgnoreCase(myName)) {
+            showChallengeNotice("✦ INVALID TARGET ✦", "Please select another online stargazer to challenge.");
+            return;
+        }
+
+        String constName = (selectedDef != null) ? selectedDef.name : "ARIES";
+        int starCount = (selectedDef != null) ? selectedDef.stars.length : 4;
+        outgoingTarget = targetUser;
+
+        OnlineSessionManager.getInstance().sendInvite(targetUser, constName);
+        showWaitingChallengeOverlay(targetUser, constName + " (" + starCount + " Stars)");
+    }
+
+    @FXML
+    private void challengeSelectedPlayer() {
+        if (serverUsersListView == null) return;
+        String targetUser = serverUsersListView.getSelectionModel().getSelectedItem();
+        if (targetUser == null) {
+            showChallengeNotice("✦ NO TARGET SELECTED ✦", "Please select an online stargazer or click the green CHALLENGE button next to their name.");
+            return;
+        }
+        initiateChallenge(targetUser);
+    }
+
+    // ─── In-Scene Celestial Challenge Dialogs ────────────────────
+
+    private void handleIncomingChallenge(String fromUser, String constellation) {
+        pendingChallenger = fromUser;
+        pendingConstellation = constellation;
+        if (incomingChallengerLabel != null) {
+            incomingChallengerLabel.setText("Stargazer " + fromUser);
+        }
+        if (incomingArenaLabel != null) {
+            ConstellationDef def = findConstellation(constellation);
+            int count = (def != null) ? def.stars.length : 4;
+            incomingArenaLabel.setText("✦ Arena: " + constellation + " (" + count + " Stars Arena) ✦");
+        }
+        if (waitingChallengeOverlay != null) waitingChallengeOverlay.setVisible(false);
+        if (incomingChallengeOverlay != null) incomingChallengeOverlay.setVisible(true);
+    }
+
+    @FXML
+    private void acceptIncomingChallenge() {
+        if (incomingChallengeOverlay != null) incomingChallengeOverlay.setVisible(false);
+        OnlineSessionManager.getInstance().acceptInvite(pendingChallenger, pendingConstellation);
+        startServerDuelGame(pendingChallenger, pendingConstellation, false);
+    }
+
+    @FXML
+    private void declineIncomingChallenge() {
+        if (incomingChallengeOverlay != null) incomingChallengeOverlay.setVisible(false);
+        OnlineSessionManager.getInstance().declineInvite(pendingChallenger);
+    }
+
+    private void showWaitingChallengeOverlay(String targetUser, String arenaInfo) {
+        if (waitingTargetLabel != null) {
+            waitingTargetLabel.setText("Waiting for " + targetUser + " to respond...");
+        }
+        if (waitingArenaLabel != null) {
+            waitingArenaLabel.setText("Arena: " + arenaInfo);
+        }
+        if (waitingChallengeOverlay != null) waitingChallengeOverlay.setVisible(true);
+    }
+
+    @FXML
+    private void cancelOutgoingChallenge() {
+        if (waitingChallengeOverlay != null) waitingChallengeOverlay.setVisible(false);
+        if (outgoingTarget != null && !outgoingTarget.isEmpty()) {
+            OnlineSessionManager.getInstance().declineInvite(outgoingTarget);
+        }
+    }
+
+    private void handleChallengeAccepted(String fromUser, String constellation) {
+        if (waitingChallengeOverlay != null) waitingChallengeOverlay.setVisible(false);
+        startServerDuelGame(fromUser, constellation, true);
+    }
+
+    private void handleChallengeDeclined(String fromUser) {
+        if (waitingChallengeOverlay != null) waitingChallengeOverlay.setVisible(false);
+        showChallengeNotice("✦ CHALLENGE DECLINED ✦", "Stargazer " + fromUser + " declined your duel invitation.");
+    }
+
+    private void showChallengeNotice(String title, String message) {
+        if (noticeTitleLabel != null) noticeTitleLabel.setText(title);
+        if (noticeMessageLabel != null) noticeMessageLabel.setText(message);
+        if (challengeNoticeOverlay != null) challengeNoticeOverlay.setVisible(true);
+    }
+
+    @FXML
+    private void dismissChallengeNotice() {
+        if (challengeNoticeOverlay != null) challengeNoticeOverlay.setVisible(false);
+    }
+
+    private void startServerDuelGame(String opponent, String constellation, boolean iChallenged) {
+        ConstellationDef def = findConstellation(constellation);
+        if (def == null) def = selectedDef;
+
+        isServerMode = true;
+        isNetworked = true;
+        isFriendMode = true;
+        isHost = iChallenged;
+        isPlayer1Turn = iChallenged; // Challenger moves first
+        remoteOpponentName = opponent;
+
+        if (serverLobbyOverlay != null) serverLobbyOverlay.setVisible(false);
+
+        launchDuelGame(def);
+    }
+
     // ─── Game Mode Selection & Launching ────────────────────────
 
     @FXML
     private void startAiMode() {
-        if (selectedDef == null) return;
+        if (selectedDef == null) {
+            selectedDef = findConstellation("ARIES");
+        }
+        isServerMode = false;
         isFriendMode = false;
+        isNetworked = false;
+        remoteOpponentName = null;
         launchDuelGame(selectedDef);
     }
 
@@ -739,22 +1164,25 @@ public class DuelController {
     private void startFriendsMode() {
         if (selectedDef == null) return;
 
-        ButtonType hostBtn = new ButtonType("Host Game");
-        ButtonType joinBtn = new ButtonType("Join Game");
+        ButtonType serverBtn = new ButtonType("Online Server Lobby");
+        ButtonType hostBtn = new ButtonType("Host Game (P2P)");
+        ButtonType joinBtn = new ButtonType("Join Game (P2P)");
         ButtonType localBtn = new ButtonType("Same Device (Pass & Play)");
         Alert modeChoice = new Alert(Alert.AlertType.CONFIRMATION);
         modeChoice.setTitle("Play with Friend");
         modeChoice.setHeaderText("How do you want to play together?");
-        modeChoice.getButtonTypes().setAll(hostBtn, joinBtn, localBtn, ButtonType.CANCEL);
+        modeChoice.getButtonTypes().setAll(serverBtn, hostBtn, joinBtn, localBtn, ButtonType.CANCEL);
 
         modeChoice.showAndWait().ifPresent(choice -> {
-            if (choice == hostBtn) startHostFlow();
+            if (choice == serverBtn) openServerLobby();
+            else if (choice == hostBtn) startHostFlow();
             else if (choice == joinBtn) startJoinFlow();
             else if (choice == localBtn) startLocalFriendsMode();
         });
     }
 
     private void startLocalFriendsMode() {
+        isServerMode = false;
         isNetworked = false;
         isFriendMode = true;
         isPlayer1Turn = true;
@@ -762,6 +1190,7 @@ public class DuelController {
     }
 
     private void startHostFlow() {
+        isServerMode = false;
         network = new NetworkManager();
         isHost = true;
 
@@ -862,29 +1291,26 @@ public class DuelController {
         if (aiTimer != null) aiTimer.stop();
     }
 
-    private boolean isMyTurn() {
-        return !isNetworked || (isPlayer1Turn == isHost);
-    }
-
     private void applyRemoteLink(int a, int b) {
         if (!duelActive || currentDuelDef == null) return;
         int[] link = getCanonicalLink(a, b);
-        if (containsLink(p1Links, link)) return; // already applied locally
+        if (containsLink(p2OrAiLinks, link)) return; // already registered
 
-        p1Links.add(link);
+        // Add to OPPONENT'S links on their board (never affects player's own board)
+        p2OrAiLinks.add(link);
         player2OrAiScore += 10;
         aiScoreLabel.setText("Score: " + player2OrAiScore);
 
-        Color remoteColor = isHost ? Color.web("#fbbf24") : Color.web("#38bdf8");
-        friendLinkColors.put(link, remoteColor);
+        String oppName = (isServerMode && remoteOpponentName != null) ? remoteOpponentName : (isNetworked ? "Friend" : "AI");
+        int oppStars = countUniqueStars(p2OrAiLinks);
+        if (turnIndicatorLabel != null) {
+            turnIndicatorLabel.setText("★ " + oppName + " has connected " + oppStars + (oppStars == 1 ? " star!" : " stars!"));
+        }
 
-        isPlayer1Turn = !isPlayer1Turn;
-        turnIndicatorLabel.setText(isMyTurn() ? "Your turn! Click 2 stars to connect." : "Waiting for your friend...");
-
-        selectedStarIdx = -1;
         drawCurrentBoards();
 
-        if (p1Links.size() == currentDuelDef.links.length) {
+        // Opponent finished all links first
+        if (p2OrAiLinks.size() == currentDuelDef.links.length) {
             finishDuel();
         }
     }
@@ -893,6 +1319,7 @@ public class DuelController {
         currentDuelDef = def;
         duelActive = true;
         selectedStarIdx = -1;
+        selectedStarIdxP2 = -1;
         player1Score = 0;
         player2OrAiScore = 0;
         timeLeft = 30;
@@ -906,38 +1333,50 @@ public class DuelController {
         gamePane.setVisible(true);
         resultOverlay.setVisible(false);
 
-        duelConstellationNameLabel.setText("✦ " + def.name + " (" + (isFriendMode ? "FRIENDS DUEL" : "VS AI") + ")");
+        String modeTag = isServerMode ? "ONLINE SERVER DUEL" : (isFriendMode && isNetworked ? "P2P DUEL" : (isFriendMode ? "LOCAL DUEL" : "VS AI"));
+        duelConstellationNameLabel.setText("✦ " + def.name + " (" + modeTag + ")");
         playerScoreLabel.setText("Score: 0");
         aiScoreLabel.setText("Score: 0");
         timerLabel.setText("⏱ 0:30");
 
-        if (isFriendMode) {
-            player1TagLabel.setText("★ PLAYER 1 (BLUE)");
-            opponentTagLabel.setText("★ PLAYER 2 (GOLD)");
-            turnIndicatorLabel.setText("Player 1's turn! Click 2 stars to connect.");
-            opponentHeader.setVisible(true);
-            opponentHeader.setManaged(true);
-            versusDivider.setVisible(false);
-            versusDivider.setManaged(false);
-            opponentBoard.setVisible(false);
-            opponentBoard.setManaged(false);
+        // Dual boards are ALWAYS visible and active for competitive duels
+        versusDivider.setVisible(true);
+        versusDivider.setManaged(true);
+        opponentBoard.setVisible(true);
+        opponentBoard.setManaged(true);
+        opponentHeader.setVisible(true);
+        opponentHeader.setManaged(true);
+
+        String myName = (currentPlayer != null && currentPlayer.getUsername() != null && !currentPlayer.getUsername().trim().isEmpty())
+                ? currentPlayer.getUsername() : "YOU";
+
+        if (isServerMode && remoteOpponentName != null) {
+            player1TagLabel.setText("★ " + myName.toUpperCase() + " (YOU)");
+            player1TagLabel.setStyle("-fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #38bdf8;");
+            opponentTagLabel.setText("★ " + remoteOpponentName.toUpperCase());
+            opponentTagLabel.setStyle("-fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #fbbf24;");
+            turnIndicatorLabel.setText("Race against " + remoteOpponentName + "! Connect all stars first!");
+        } else if (isNetworked) {
+            player1TagLabel.setText("★ " + myName.toUpperCase() + " (YOU)");
+            player1TagLabel.setStyle("-fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #38bdf8;");
+            opponentTagLabel.setText("★ OPPONENT");
+            opponentTagLabel.setStyle("-fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #fbbf24;");
+            turnIndicatorLabel.setText("Race against your friend! Connect all stars first!");
+        } else if (isFriendMode) {
+            player1TagLabel.setText("★ PLAYER 1");
+            player1TagLabel.setStyle("-fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #38bdf8;");
+            opponentTagLabel.setText("★ PLAYER 2");
+            opponentTagLabel.setStyle("-fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #fbbf24;");
+            turnIndicatorLabel.setText("Player 1 plays on Left, Player 2 on Right! Race to connect stars!");
         } else {
-            player1TagLabel.setText("✦ YOU");
+            player1TagLabel.setText("✦ " + myName.toUpperCase() + " (YOU)");
+            player1TagLabel.setStyle("-fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #38bdf8;");
             opponentTagLabel.setText("✦ AI");
+            opponentTagLabel.setStyle("-fx-font-family: 'Verdana'; -fx-font-weight: bold; -fx-font-size: 15px; -fx-text-fill: #c084fc;");
             turnIndicatorLabel.setText("Race against AI! Connect stars first.");
-            opponentHeader.setVisible(true);
-            opponentHeader.setManaged(true);
-            versusDivider.setVisible(true);
-            versusDivider.setManaged(true);
-            opponentBoard.setVisible(true);
-            opponentBoard.setManaged(true);
         }
 
-        drawDuelBoard(playerCanvas, p1Links, selectedStarIdx, Color.web("#38bdf8"));
-        if (!isFriendMode) {
-            drawDuelBoard(aiCanvas, p2OrAiLinks, -1, Color.web("#c084fc"));
-        }
-
+        drawCurrentBoards();
         startTimers();
     }
 
@@ -955,9 +1394,11 @@ public class DuelController {
         duelTimer.setCycleCount(Timeline.INDEFINITE);
         duelTimer.play();
 
-        if (!isFriendMode) {
-            // AI makes a link every 2 seconds
-            aiTimer = new Timeline(new KeyFrame(Duration.seconds(2.2), e -> aiMakeMove()));
+        boolean isAi = !isFriendMode && !isServerMode && !isNetworked;
+        if (isAi) {
+            // AI makes a link every 2.0 seconds with an initial reaction delay of 1.2s
+            aiTimer = new Timeline(new KeyFrame(Duration.seconds(2.0), e -> aiMakeMove()));
+            aiTimer.setDelay(Duration.seconds(1.2));
             aiTimer.setCycleCount(Timeline.INDEFINITE);
             aiTimer.play();
         }
@@ -985,7 +1426,7 @@ public class DuelController {
     }
 
     private void handleStarClicked(int clickedIdx) {
-        if (isNetworked && !isMyTurn()) return; // not your turn yet
+        if (!duelActive || currentDuelDef == null) return;
 
         if (selectedStarIdx == -1) {
             selectedStarIdx = clickedIdx;
@@ -1009,16 +1450,14 @@ public class DuelController {
                 player1Score += 10;
                 playerScoreLabel.setText("Score: " + player1Score);
 
-                if (isFriendMode) {
-                    Color playerColor = isPlayer1Turn ? Color.web("#38bdf8") : Color.web("#fbbf24");
-                    friendLinkColors.put(link, playerColor);
-                    isPlayer1Turn = !isPlayer1Turn;
-                    turnIndicatorLabel.setText(isNetworked
-                            ? (isMyTurn() ? "Your turn! Click 2 stars to connect." : "Waiting for your friend...")
-                            : ((isPlayer1Turn ? "Player 1's" : "Player 2's") + " turn! Click 2 stars to connect."));
+                int myStars = countUniqueStars(p1Links);
+                if (turnIndicatorLabel != null) {
+                    turnIndicatorLabel.setText("✦ You connected " + myStars + " stars! Find the next link.");
                 }
 
-                if (isNetworked) {
+                if (isServerMode && remoteOpponentName != null) {
+                    OnlineSessionManager.getInstance().sendLink(remoteOpponentName, a, b);
+                } else if (isNetworked && network != null) {
                     network.send("LINK:" + a + "," + b);
                 }
 
@@ -1033,15 +1472,76 @@ public class DuelController {
         }
     }
 
+    private void onAiCanvasClick(MouseEvent e) {
+        if (!duelActive || currentDuelDef == null) return;
+        // Only allow clicking aiCanvas in local friend mode (pass & play on same screen)
+        if (!isFriendMode || isNetworked || isServerMode) return;
+
+        double cw = aiCanvas.getWidth();
+        double ch = aiCanvas.getHeight();
+        double cx = cw / 2.0;
+        double cy = ch / 2.0;
+
+        for (int i = 0; i < currentDuelDef.stars.length; i++) {
+            double sx = cx + currentDuelDef.stars[i][0] * 2.2;
+            double sy = cy + currentDuelDef.stars[i][1] * 2.2;
+
+            if (Math.hypot(e.getX() - sx, e.getY() - sy) < 22) {
+                handleAiCanvasStarClicked(i);
+                break;
+            }
+        }
+    }
+
+    private void handleAiCanvasStarClicked(int clickedIdx) {
+        if (selectedStarIdxP2 == -1) {
+            selectedStarIdxP2 = clickedIdx;
+            drawCurrentBoards();
+        } else if (selectedStarIdxP2 == clickedIdx) {
+            selectedStarIdxP2 = -1;
+            drawCurrentBoards();
+        } else {
+            int a = selectedStarIdxP2;
+            int b = clickedIdx;
+            selectedStarIdxP2 = -1;
+
+            if (isValidLink(a, b)) {
+                int[] link = getCanonicalLink(a, b);
+                if (containsLink(p2OrAiLinks, link)) {
+                    drawCurrentBoards();
+                    return;
+                }
+
+                p2OrAiLinks.add(link);
+                player2OrAiScore += 10;
+                aiScoreLabel.setText("Score: " + player2OrAiScore);
+                drawCurrentBoards();
+
+                if (p2OrAiLinks.size() == currentDuelDef.links.length) {
+                    finishDuel();
+                }
+            } else {
+                drawCurrentBoards();
+            }
+        }
+    }
+
     private void aiMakeMove() {
-        if (!duelActive || currentDuelDef == null || isFriendMode) return;
+        if (!duelActive || currentDuelDef == null || isFriendMode || isServerMode || isNetworked) return;
 
         for (int[] l : currentDuelDef.links) {
             if (!containsLink(p2OrAiLinks, l)) {
                 p2OrAiLinks.add(l);
                 player2OrAiScore += 10;
                 aiScoreLabel.setText("Score: " + player2OrAiScore);
-                drawDuelBoard(aiCanvas, p2OrAiLinks, -1, Color.web("#c084fc"));
+
+                int oppStars = countUniqueStars(p2OrAiLinks);
+                int totalStars = currentDuelDef.stars.length;
+                if (turnIndicatorLabel != null) {
+                    turnIndicatorLabel.setText("★ AI connected " + oppStars + "/" + totalStars + " stars! (" + p2OrAiLinks.size() + "/" + currentDuelDef.links.length + " links)");
+                }
+
+                drawCurrentBoards();
 
                 if (p2OrAiLinks.size() == currentDuelDef.links.length) {
                     finishDuel();
@@ -1074,13 +1574,214 @@ public class DuelController {
         return false;
     }
 
-    private void drawCurrentBoards() {
-        if (isFriendMode) {
-            drawDuelBoard(playerCanvas, p1Links, selectedStarIdx, isPlayer1Turn ? Color.web("#38bdf8") : Color.web("#fbbf24"));
-        } else {
-            drawDuelBoard(playerCanvas, p1Links, selectedStarIdx, Color.web("#38bdf8"));
-            drawDuelBoard(aiCanvas, p2OrAiLinks, -1, Color.web("#c084fc"));
+    private int countUniqueStars(List<int[]> links) {
+        Set<Integer> unique = new HashSet<>();
+        for (int[] edge : links) {
+            unique.add(edge[0]);
+            unique.add(edge[1]);
         }
+        return unique.size();
+    }
+
+    private void updateProgressLabels() {
+        if (currentDuelDef == null) return;
+        int totalStars = currentDuelDef.stars.length;
+        int totalLinks = currentDuelDef.links.length;
+
+        int p1Stars = countUniqueStars(p1Links);
+        if (playerProgressLabel != null) {
+            playerProgressLabel.setText("★ " + p1Stars + " / " + totalStars + " Stars (" + p1Links.size() + "/" + totalLinks + " links)");
+        }
+
+        int p2Stars = countUniqueStars(p2OrAiLinks);
+        if (opponentProgressLabel != null) {
+            opponentProgressLabel.setText("★ " + p2Stars + " / " + totalStars + " Stars (" + p2OrAiLinks.size() + "/" + totalLinks + " links)");
+        }
+    }
+
+    private void drawCurrentBoards() {
+        drawDuelBoard(playerCanvas, p1Links, selectedStarIdx, Color.web("#38bdf8"));
+
+        boolean isAi = (!isFriendMode && !isNetworked && !isServerMode);
+        Color oppThemeColor = isAi ? Color.web("#c084fc") : Color.web("#fbbf24");
+        String oppDisplayName = (isServerMode && remoteOpponentName != null) ? remoteOpponentName : (isNetworked ? "Opponent" : (isFriendMode ? "Player 2" : "AI"));
+
+        if (isFriendMode && !isNetworked && !isServerMode) {
+            // Local same-device pass & play
+            drawDuelBoard(aiCanvas, p2OrAiLinks, selectedStarIdxP2, oppThemeColor);
+        } else {
+            // Competitor's board (Online Friends, P2P Friends, or VS AI):
+            // Shroud secret connections and display live orbital progress tracker (how much they are connecting)!
+            drawOpponentProgressBoard(aiCanvas, p2OrAiLinks, oppDisplayName, oppThemeColor);
+        }
+
+        updateProgressLabels();
+    }
+
+    private void drawOpponentProgressBoard(Canvas canvas, List<int[]> links, String oppName, Color themeColor) {
+        GraphicsContext g = canvas.getGraphicsContext2D();
+        double w = canvas.getWidth();
+        double h = canvas.getHeight();
+        double cx = w / 2.0;
+        double cy = h / 2.0;
+
+        g.setFill(Color.web("#020308"));
+        g.fillRect(0, 0, w, h);
+
+        // 1. Soft celestial nebula glow
+        RadialGradient boardGlow = new RadialGradient(
+                0, 0, cx, cy - 20, 210, false, CycleMethod.NO_CYCLE,
+                new Stop(0.0, Color.color(themeColor.getRed(), themeColor.getGreen(), themeColor.getBlue(), 0.16)),
+                new Stop(0.65, Color.color(themeColor.getRed(), themeColor.getGreen(), themeColor.getBlue(), 0.04)),
+                new Stop(1.0, Color.TRANSPARENT)
+        );
+        g.setFill(boardGlow);
+        g.fillOval(cx - 210, (cy - 20) - 210, 420, 420);
+
+        // 2. Ambient background stars
+        g.setFill(Color.color(1, 1, 1, 0.28));
+        for (int i = 0; i < 48; i++) {
+            g.fillOval((i * 67 + 13) % w, (i * 131 + 29) % h, 1.6, 1.6);
+        }
+
+        if (currentDuelDef == null) return;
+
+        int totalStars = currentDuelDef.stars.length;
+        int connectedStars = countUniqueStars(links);
+        int totalLinks = currentDuelDef.links.length;
+        int connectedLinks = links.size();
+
+        double wheelCenterY = cy - 40;
+        double wheelR = 120.0;
+
+        // 3. Shroud Rings (Astrolabe Orbit)
+        g.setStroke(Color.color(themeColor.getRed(), themeColor.getGreen(), themeColor.getBlue(), 0.22));
+        g.setLineWidth(1.5);
+        g.strokeOval(cx - wheelR - 18, wheelCenterY - wheelR - 18, (wheelR + 18) * 2, (wheelR + 18) * 2);
+
+        g.setStroke(Color.color(themeColor.getRed(), themeColor.getGreen(), themeColor.getBlue(), 0.4));
+        g.setLineWidth(2.5);
+        g.strokeOval(cx - wheelR, wheelCenterY - wheelR, wheelR * 2, wheelR * 2);
+
+        g.setStroke(Color.color(themeColor.getRed(), themeColor.getGreen(), themeColor.getBlue(), 0.18));
+        g.setLineWidth(1.0);
+        g.strokeOval(cx - wheelR + 25, wheelCenterY - wheelR + 25, (wheelR - 25) * 2, (wheelR - 25) * 2);
+
+        // Connecting progress arc / ring fill
+        if (connectedStars > 0) {
+            double arcExtent = ((double) connectedStars / totalStars) * 360.0;
+            g.setStroke(Color.color(themeColor.getRed(), themeColor.getGreen(), themeColor.getBlue(), 0.7));
+            g.setLineWidth(6.0);
+            g.strokeArc(cx - wheelR, wheelCenterY - wheelR, wheelR * 2, wheelR * 2, 90, -arcExtent, javafx.scene.shape.ArcType.OPEN);
+        }
+
+        // 4. Circular Celestial Star Sockets
+        for (int i = 0; i < totalStars; i++) {
+            double angle = -Math.PI / 2.0 + i * (2.0 * Math.PI / totalStars);
+            double sx = cx + Math.cos(angle) * wheelR;
+            double sy = wheelCenterY + Math.sin(angle) * wheelR;
+
+            boolean isLit = (i < connectedStars);
+            if (isLit) {
+                // Outer radiant glow aura
+                RadialGradient starAura = new RadialGradient(
+                        0, 0, sx, sy, 22, false, CycleMethod.NO_CYCLE,
+                        new Stop(0.0, Color.color(themeColor.getRed(), themeColor.getGreen(), themeColor.getBlue(), 0.6)),
+                        new Stop(1.0, Color.TRANSPARENT)
+                );
+                g.setFill(starAura);
+                g.fillOval(sx - 22, sy - 22, 44, 44);
+
+                // Illuminated star
+                drawStarShape(g, sx, sy, 16, 7.5,
+                        Color.color(themeColor.getRed(), themeColor.getGreen(), themeColor.getBlue(), 0.5),
+                        Color.WHITE,
+                        themeColor, 2.0);
+                g.setFill(Color.WHITE);
+                g.fillOval(sx - 3.5, sy - 3.5, 7, 7);
+            } else {
+                // Shrouded dormant socket
+                drawStarShape(g, sx, sy, 10, 5,
+                        null,
+                        Color.web("#0f172a"),
+                        Color.web("#475569", 0.7), 1.2);
+            }
+        }
+
+        // 5. Center Dial Readout
+        // Frosted central backing
+        g.setFill(new RadialGradient(
+                0, 0, cx, wheelCenterY, wheelR - 30, false, CycleMethod.NO_CYCLE,
+                new Stop(0.0, Color.rgb(10, 20, 48, 0.88)),
+                new Stop(0.8, Color.rgb(6, 12, 32, 0.95)),
+                new Stop(1.0, Color.TRANSPARENT)
+        ));
+        g.fillOval(cx - (wheelR - 30), wheelCenterY - (wheelR - 30), (wheelR - 30) * 2, (wheelR - 30) * 2);
+
+        // Number of stars connected
+        g.setTextAlign(javafx.scene.text.TextAlignment.CENTER);
+        g.setFont(Font.font("Verdana", FontWeight.BOLD, 36));
+        g.setFill(themeColor);
+        g.fillText(connectedStars + " / " + totalStars, cx, wheelCenterY - 2);
+
+        // Subtitle inside wheel
+        g.setFont(Font.font("Verdana", FontWeight.BOLD, 10));
+        g.setFill(Color.web("#cbd5e1"));
+        g.fillText("STARS CONNECTED", cx, wheelCenterY + 18);
+
+        g.setFont(Font.font("Verdana", FontWeight.NORMAL, 10));
+        g.setFill(Color.web("#38bdf8"));
+        g.fillText(connectedLinks + " of " + totalLinks + " links", cx, wheelCenterY + 34);
+
+        // 6. Opponent Status Banner Card Below the Wheel
+        double bannerY = cy + 120;
+        double bannerW = 380;
+        double bannerH = 46;
+        g.setFill(Color.web("#09122c", 0.9));
+        g.fillRoundRect(cx - bannerW / 2.0, bannerY, bannerW, bannerH, 16, 16);
+        g.setStroke(Color.color(themeColor.getRed(), themeColor.getGreen(), themeColor.getBlue(), 0.35));
+        g.setLineWidth(1.4);
+        g.strokeRoundRect(cx - bannerW / 2.0, bannerY, bannerW, bannerH, 16, 16);
+
+        g.setFont(Font.font("Verdana", FontWeight.BOLD, 12));
+        if (connectedStars == 0) {
+            g.setFill(Color.web("#94a3b8"));
+            g.fillText("✦ " + oppName + " is searching the sky... ✦", cx, bannerY + 28);
+        } else if (connectedLinks == totalLinks) {
+            g.setFill(Color.web("#34d399"));
+            g.fillText("✦ " + oppName + " illuminated all " + totalStars + " stars! ✦", cx, bannerY + 28);
+        } else {
+            g.setFill(themeColor);
+            String starWord = (connectedStars == 1) ? " star" : " stars";
+            g.fillText("★ " + oppName + " has connected " + connectedStars + starWord + "! (" + connectedLinks + "/" + totalLinks + " links)", cx, bannerY + 28);
+        }
+
+        // 7. Horizontal Progress Bar
+        double barY = cy + 184;
+        double barW = 340;
+        double barH = 10;
+        g.setFill(Color.web("#1e293b", 0.8));
+        g.fillRoundRect(cx - barW / 2.0, barY, barW, barH, 10, 10);
+
+        if (totalLinks > 0 && connectedLinks > 0) {
+            double fillW = Math.min(barW, barW * (connectedLinks / (double) totalLinks));
+            g.setFill(new LinearGradient(
+                    0, 0, 1, 0, true, CycleMethod.NO_CYCLE,
+                    new Stop(0.0, Color.web("#f59e0b")),
+                    new Stop(1.0, themeColor)
+            ));
+            g.fillRoundRect(cx - barW / 2.0, barY, fillW, barH, 10, 10);
+        }
+
+        int percent = (totalLinks > 0) ? (int)((connectedLinks * 100.0) / totalLinks) : 0;
+        g.setFont(Font.font("Verdana", FontWeight.BOLD, 11));
+        g.setFill(Color.web("#cbd5e1"));
+        g.fillText("RIVAL PROGRESS: " + percent + "%", cx, barY + 26);
+
+        // Shroud notice at the very bottom
+        g.setFont(Font.font("Verdana", FontWeight.NORMAL, 9.5));
+        g.setFill(Color.web("#64748b"));
+        g.fillText("✦ Shrouded Realm: Competitor's constellation lines remain secret ✦", cx, h - 22);
     }
 
     private void drawDuelBoard(Canvas canvas, List<int[]> litLinks, int highlightedStar, Color themeColor) {
@@ -1117,7 +1818,7 @@ public class DuelController {
             double x2 = cx + currentDuelDef.stars[link[1]][0] * 2.2;
             double y2 = cy + currentDuelDef.stars[link[1]][1] * 2.2;
 
-            Color linkCol = (isFriendMode && friendLinkColors.containsKey(link)) ? friendLinkColors.get(link) : themeColor;
+            Color linkCol = themeColor;
 
             g.setStroke(Color.color(linkCol.getRed(), linkCol.getGreen(), linkCol.getBlue(), 0.35));
             g.setLineWidth(10.0);
@@ -1183,27 +1884,57 @@ public class DuelController {
     private void showResults() {
         resultOverlay.setVisible(true);
 
-        boolean isVictory;
-        if (isFriendMode) {
-            isVictory = true; // Constellation completed by friends!
-            if (player1Score > player2OrAiScore) {
-                resultLabel.setText("⚔ PLAYER 1 WINS!");
-            } else if (player2OrAiScore > player1Score) {
-                resultLabel.setText("⚔ PLAYER 2 WINS!");
-            } else {
-                resultLabel.setText("✦ CONSTELLATION ENLIGHTENED! ✦");
-            }
-            resultScoreLabel.setText("Together you lit " + p1Links.size() + " / " + currentDuelDef.links.length + " links!");
-        } else {
-            boolean completedAll = (p1Links.size() == currentDuelDef.links.length);
-            isVictory = completedAll || (player1Score > player2OrAiScore);
+        boolean localCompleted = (currentDuelDef != null && p1Links.size() == currentDuelDef.links.length);
+        boolean opponentCompleted = (currentDuelDef != null && p2OrAiLinks.size() == currentDuelDef.links.length);
 
-            if (isVictory) {
-                resultLabel.setText("✦ CONSTELLATION ENLIGHTENED! ✦");
-                resultScoreLabel.setText("You illuminated all stars of " + currentDuelDef.name + "! +50 Star Dust");
+        boolean isVictory = false;
+        boolean isTie = false;
+
+        if (localCompleted && !opponentCompleted) {
+            isVictory = true;
+        } else if (opponentCompleted && !localCompleted) {
+            isVictory = false;
+        } else {
+            // Evaluated by scores
+            if (player1Score > player2OrAiScore) {
+                isVictory = true;
+            } else if (player2OrAiScore > player1Score) {
+                isVictory = false;
             } else {
-                resultLabel.setText("✦ AI CLAIMED THE STARS ✦");
-                resultScoreLabel.setText("You lit " + p1Links.size() + " links, AI lit " + p2OrAiLinks.size() + " links.");
+                isTie = true;
+            }
+        }
+
+        String oppDisplayName;
+        if (isServerMode && remoteOpponentName != null) {
+            oppDisplayName = remoteOpponentName;
+        } else if (isNetworked) {
+            oppDisplayName = "Your friend";
+        } else if (isFriendMode) {
+            oppDisplayName = "Player 2";
+        } else {
+            oppDisplayName = "AI";
+        }
+
+        if (isTie) {
+            resultLabel.setText("✦ CELESTIAL DRAW! ✦");
+            resultLabel.setStyle("-fx-font-family: 'Verdana'; -fx-font-size: 38px; -fx-font-weight: bold; -fx-text-fill: #ffd65a; -fx-effect: dropshadow(gaussian, #f59e0b, 20, 0.5, 0, 0);");
+            resultScoreLabel.setText("Both stargazers tied with " + player1Score + " points!");
+        } else if (isVictory) {
+            resultLabel.setText("✦ VICTORY! ✦");
+            resultLabel.setStyle("-fx-font-family: 'Verdana'; -fx-font-size: 38px; -fx-font-weight: bold; -fx-text-fill: #34d399; -fx-effect: dropshadow(gaussian, #10b981, 20, 0.5, 0, 0);");
+            if (localCompleted) {
+                resultScoreLabel.setText("You illuminated " + currentDuelDef.name + " before " + oppDisplayName + "! +50 Star Dust");
+            } else {
+                resultScoreLabel.setText("You outscored " + oppDisplayName + " (" + player1Score + " vs " + player2OrAiScore + ")! +50 Star Dust");
+            }
+        } else {
+            resultLabel.setText("⚔ DEFEAT ⚔");
+            resultLabel.setStyle("-fx-font-family: 'Verdana'; -fx-font-size: 38px; -fx-font-weight: bold; -fx-text-fill: #f87171; -fx-effect: dropshadow(gaussian, #ef4444, 20, 0.5, 0, 0);");
+            if (opponentCompleted) {
+                resultScoreLabel.setText(oppDisplayName + " illuminated " + currentDuelDef.name + " first! (" + player2OrAiScore + " pts)");
+            } else {
+                resultScoreLabel.setText(oppDisplayName + " won with higher score (" + player2OrAiScore + " vs " + player1Score + ").");
             }
         }
 
@@ -1224,7 +1955,12 @@ public class DuelController {
     @FXML
     private void rematch() {
         resultOverlay.setVisible(false);
-        if (isNetworked) {
+        if (isServerMode && remoteOpponentName != null) {
+            if (isHost) {
+                OnlineSessionManager.getInstance().sendRematch(remoteOpponentName);
+                launchDuelGame(currentDuelDef);
+            }
+        } else if (isNetworked && network != null) {
             if (isHost) {
                 network.send("REMATCH");
                 launchDuelGame(currentDuelDef);
@@ -1237,9 +1973,17 @@ public class DuelController {
 
     @FXML
     private void returnToMap() {
+        if (isServerMode && remoteOpponentName != null && duelActive) {
+            OnlineSessionManager.getInstance().sendLeave(remoteOpponentName);
+        }
         duelActive = false;
         if (duelTimer != null) duelTimer.stop();
         if (aiTimer != null) aiTimer.stop();
+
+        isServerMode = false;
+        isNetworked = false;
+        isFriendMode = false;
+        remoteOpponentName = null;
 
         gamePane.setVisible(false);
         resultOverlay.setVisible(false);
@@ -1252,11 +1996,20 @@ public class DuelController {
 
     @FXML
     private void backToHub() {
+        if (isServerMode && remoteOpponentName != null && duelActive) {
+            OnlineSessionManager.getInstance().sendLeave(remoteOpponentName);
+        }
+        OnlineSessionManager.getInstance().removeActiveListener(duelSocketListener);
         if (network != null) network.close();
         duelActive = false;
         if (mapAnimTimer != null) mapAnimTimer.stop();
         if (duelTimer != null) duelTimer.stop();
         if (aiTimer != null) aiTimer.stop();
+
+        isServerMode = false;
+        isNetworked = false;
+        isFriendMode = false;
+        remoteOpponentName = null;
 
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("GameHubView.fxml"));

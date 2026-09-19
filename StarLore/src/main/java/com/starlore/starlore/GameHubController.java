@@ -9,8 +9,10 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
+import javafx.scene.effect.DropShadow;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.CycleMethod;
+import javafx.scene.paint.LinearGradient;
 import javafx.scene.paint.RadialGradient;
 import javafx.scene.paint.Stop;
 import javafx.stage.Stage;
@@ -353,7 +355,7 @@ public class GameHubController {
     @FXML
     private void launchStoryMode() {
         transitionOverlay.setVisible(true);
-        playBookTransition(() -> navigateTo("BattleScreen.fxml"));
+        playStoryTransition(() -> navigateTo("BattleScreen.fxml"));
     }
 
     @FXML
@@ -436,44 +438,55 @@ public class GameHubController {
 
     // ─── Transitions ───────────────────────────────────────────
 
-    private void playBookTransition(Runnable onComplete) {
+    private void playStoryTransition(Runnable onComplete) {
         GraphicsContext gc = transitionCanvas.getGraphicsContext2D();
         double initW = getOverlayWidth();
         double initH = getOverlayHeight();
-        gc.setFill(Color.rgb(5, 5, 20, 0.95));
+        gc.setFill(Color.rgb(2, 4, 15, 0.95));
         gc.fillRect(0, 0, initW, initH);
 
-        double[] progress = {0};
-        Timeline bookFlip = new Timeline();
-        bookFlip.setCycleCount(25);
-        KeyFrame frame = new KeyFrame(Duration.millis(60), e -> {
-            progress[0] += 0.04;
+        transitionLabel.setText("✦ EMBARKING ON CELESTIAL ODYSSEY ✦");
+        transitionLabel.setStyle("-fx-font-family: 'Verdana'; -fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #ffd65a; -fx-effect: dropshadow(gaussian, #f59e0b, 18, 0.7, 0, 0);");
+        transitionLabel.setVisible(true);
+
+        double[] frame = {0};
+        Timeline storyTimeline = new Timeline();
+        storyTimeline.setCycleCount(32);
+        KeyFrame kf = new KeyFrame(Duration.millis(35), e -> {
+            frame[0]++;
             double w = getOverlayWidth();
             double h = getOverlayHeight();
+            double cx = w / 2.0;
+            double cy = h / 2.0;
 
             gc.clearRect(0, 0, w, h);
-            gc.setFill(Color.rgb(5, 5, 20, 0.95));
+            gc.setFill(Color.rgb(2, 4, 15, 0.94));
             gc.fillRect(0, 0, w, h);
 
-            double centerX = w / 2.0;
-            double centerY = h / 2.0;
-            double pageWidth = 300 + (progress[0] * 400);
-            double pageHeight = 220;
+            // Expanding cosmic rings
+            for (int r = 1; r <= 4; r++) {
+                double radius = (frame[0] * 12 + r * 60) % (Math.max(w, h) * 0.75);
+                double alpha = Math.max(0, 1.0 - radius / (Math.max(w, h) * 0.75));
+                gc.setStroke(Color.rgb(56, 189, 248, alpha * 0.5));
+                gc.setLineWidth(1.8);
+                gc.strokeOval(cx - radius, cy - radius * 0.6, radius * 2, radius * 1.2);
+            }
 
-            gc.setFill(Color.rgb(60, 0, 100, 0.9));
-            gc.fillRoundRect(centerX - pageWidth, centerY - pageHeight / 2.0, pageWidth, pageHeight, 10, 10);
-            gc.setFill(Color.rgb(80, 0, 130, 0.9));
-            gc.fillRoundRect(centerX, centerY - pageHeight / 2.0, pageWidth, pageHeight, 10, 10);
+            // Radial golden starlight rays
+            gc.setStroke(Color.rgb(254, 240, 138, 0.45));
+            gc.setLineWidth(1.5);
+            for (int i = 0; i < 12; i++) {
+                double ang = (i * Math.PI / 6.0) + frame[0] * 0.04;
+                double len = 40 + frame[0] * 8;
+                gc.strokeLine(cx, cy, cx + Math.cos(ang) * len, cy + Math.sin(ang) * len);
+            }
         });
-        bookFlip.getKeyFrames().add(frame);
-        bookFlip.setOnFinished(e -> {
-            double w = getOverlayWidth();
-            double h = getOverlayHeight();
-            gc.setFill(Color.rgb(20, 0, 40));
-            gc.fillRect(0, 0, w, h);
+        storyTimeline.getKeyFrames().add(kf);
+        storyTimeline.setOnFinished(e -> {
+            transitionLabel.setVisible(false);
             fadeOutAndNavigate(onComplete);
         });
-        bookFlip.play();
+        storyTimeline.play();
     }
 
     private void playSparkTransition(Runnable onComplete) {
@@ -535,51 +548,123 @@ public class GameHubController {
         double w = getOverlayWidth();
         double h = getOverlayHeight();
 
-        gc.setFill(Color.rgb(0, 0, 0, 0.85));
+        gc.setFill(Color.rgb(2, 4, 15, 0.92));
         gc.fillRect(0, 0, w, h);
+
+        // Step 1: Initializing velocity drive
         transitionLabel.setText("INITIALIZING VELOCITY DRIVE...");
+        transitionLabel.setStyle("-fx-font-family: 'Verdana'; -fx-font-size: 22px; -fx-text-fill: #38bdf8; -fx-font-weight: bold; -fx-effect: dropshadow(gaussian, #0284c7, 16, 0.8, 0, 0);");
         transitionLabel.setVisible(true);
 
-        PauseTransition msgPause = new PauseTransition(Duration.seconds(1.0));
+        PauseTransition msgPause = new PauseTransition(Duration.seconds(0.85));
         msgPause.setOnFinished(e -> {
-            transitionLabel.setVisible(false);
-            double curW = getOverlayWidth();
-            double curH = getOverlayHeight();
+            // Step 2: Humorous text "CATCH STARS, NOT FEELINGS"
+            transitionLabel.setText("✦ CATCH STARS, NOT FEELINGS... ✦");
+            transitionLabel.setStyle("-fx-font-family: 'Verdana'; -fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #ffd65a; -fx-effect: dropshadow(gaussian, #f43f5e, 22, 0.85, 0, 0);");
 
-            double[] starX = {-80};
-            double[] starY = {curH * 0.35 + random.nextInt(Math.max(1, (int)(curH * 0.3)))};
-            double speed = (curW + 160) / 30.0;
+            // Step 3: Love Arrow flies playfully "here and there in the screen"
+            int totalFrames = 68;
+            double[] frame = {0};
+            double[] prevX = {-1};
+            double[] prevY = {-1};
+            List<double[]> trail = new ArrayList<>();
 
-            Timeline starAnim = new Timeline();
-            starAnim.setCycleCount(30);
-            KeyFrame kf = new KeyFrame(Duration.millis(25), ev -> {
-                double frameW = getOverlayWidth();
-                double frameH = getOverlayHeight();
+            Timeline arrowAnim = new Timeline();
+            arrowAnim.setCycleCount(totalFrames);
+            KeyFrame kf = new KeyFrame(Duration.millis(26), ev -> {
+                frame[0]++;
+                double curW = getOverlayWidth();
+                double curH = getOverlayHeight();
+                double cx = curW / 2.0;
+                double cy = curH / 2.0;
+                double t = frame[0] / (double) totalFrames; // 0.0 -> 1.0
 
-                gc.clearRect(0, 0, frameW, frameH);
-                gc.setFill(Color.rgb(0, 0, 0, 0.85));
-                gc.fillRect(0, 0, frameW, frameH);
+                gc.clearRect(0, 0, curW, curH);
+                gc.setFill(Color.rgb(2, 4, 15, 0.90));
+                gc.fillRect(0, 0, curW, curH);
 
-                starX[0] += speed;
-                starY[0] += 6;
+                // Playful curving path that loops and swoops across multiple quadrants
+                double arrowX = cx + Math.sin(t * Math.PI * 3.4) * (curW * 0.40) + (t - 0.5) * (curW * 0.30);
+                double arrowY = cy + Math.cos(t * Math.PI * 2.6) * (curH * 0.30) + Math.sin(t * Math.PI * 5.2) * 35.0;
 
-                gc.setStroke(Color.rgb(255, 255, 200, 0.6));
-                gc.setLineWidth(4);
-                gc.strokeLine(starX[0] - 120, starY[0] - 18, starX[0], starY[0]);
-                gc.setFill(Color.WHITE);
-                gc.fillOval(starX[0] - 8, starY[0] - 8, 16, 16);
+                double angle;
+                if (prevX[0] >= 0) {
+                    angle = Math.atan2(arrowY - prevY[0], arrowX - prevX[0]);
+                } else {
+                    angle = 0.35;
+                }
+                prevX[0] = arrowX;
+                prevY[0] = arrowY;
+
+                // Add to sparkling trail
+                trail.add(new double[]{arrowX, arrowY, 1.0, 14.0});
+
+                // Render fading sparkling trail
+                for (int ti = trail.size() - 1; ti >= 0; ti--) {
+                    double[] p = trail.get(ti);
+                    p[2] -= 0.04;
+                    if (p[2] <= 0) {
+                        trail.remove(ti);
+                        continue;
+                    }
+                    gc.setGlobalAlpha(Math.max(0, p[2]));
+                    Color sparkColor = (ti % 3 == 0) ? Color.web("#f43f5e") : ((ti % 3 == 1) ? Color.web("#ffd65a") : Color.web("#38bdf8"));
+                    gc.setFill(sparkColor);
+                    gc.fillOval(p[0] - p[3] / 2.0, p[1] - p[3] / 2.0, p[3] * p[2], p[3] * p[2]);
+                }
+                gc.setGlobalAlpha(1.0);
+
+                // Draw Love Arrow
+                drawLoveArrow(gc, arrowX, arrowY, angle);
             });
-            starAnim.getKeyFrames().add(kf);
-            starAnim.setOnFinished(ev -> {
-                double finW = getOverlayWidth();
-                double finH = getOverlayHeight();
-                gc.setFill(Color.rgb(10, 0, 0));
-                gc.fillRect(0, 0, finW, finH);
+
+            arrowAnim.getKeyFrames().add(kf);
+            arrowAnim.setOnFinished(ev -> {
+                transitionLabel.setVisible(false);
                 fadeOutAndNavigate(onComplete);
             });
-            starAnim.play();
+            arrowAnim.play();
         });
         msgPause.play();
+    }
+
+    private void drawLoveArrow(GraphicsContext gc, double x, double y, double angle) {
+        gc.save();
+        gc.translate(x, y);
+        gc.rotate(Math.toDegrees(angle));
+
+        // 1. Arrow Shaft (Gradient from cyan to pink to gold)
+        gc.setStroke(new LinearGradient(0, 0, 1, 0, true, CycleMethod.NO_CYCLE,
+                new Stop(0.0, Color.web("#38bdf8")),
+                new Stop(0.5, Color.web("#f43f5e")),
+                new Stop(1.0, Color.web("#ffd65a"))));
+        gc.setLineWidth(3.5);
+        gc.strokeLine(-48, 0, 0, 0);
+
+        // 2. Fletching / Feathers at tail (-48)
+        gc.setStroke(Color.web("#38bdf8"));
+        gc.setLineWidth(2.2);
+        gc.strokeLine(-48, 0, -58, -10);
+        gc.strokeLine(-48, 0, -58, 10);
+        gc.strokeLine(-38, 0, -48, -8);
+        gc.strokeLine(-38, 0, -48, 8);
+
+        // 3. Heart Arrowhead at (0, 0)
+        gc.setFill(Color.web("#f43f5e"));
+        gc.setEffect(new DropShadow(14, Color.web("#fb7185")));
+
+        double hr = 9.0;
+        gc.fillOval(-hr * 0.4, -hr, hr * 1.2, hr * 1.1);
+        gc.fillOval(-hr * 0.4, -0.1, hr * 1.2, hr * 1.1);
+        double[] tx = {0, 15, 0};
+        double[] ty = {-hr * 0.9, 0, hr * 0.9};
+        gc.fillPolygon(tx, ty, 3);
+
+        // Inner white starlight shine
+        gc.setFill(Color.web("#fff1f2"));
+        gc.fillOval(2, -2.5, 5, 5);
+
+        gc.restore();
     }
 
     private void fadeOutAndNavigate(Runnable onComplete) {

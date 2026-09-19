@@ -3,6 +3,7 @@
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressBar?>
@@ -16,9 +17,9 @@
    <children>
       <Canvas fx:id="gameCanvas" width="900" height="620" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
 
-      <!-- ─── Top Floating Glass Cockpit HUD ──────────────────────── -->
-      <HBox alignment="CENTER_LEFT" layoutX="18" layoutY="14" spacing="26" AnchorPane.leftAnchor="18" AnchorPane.rightAnchor="85"
-            style="-fx-background-color: rgba(5, 10, 25, 0.85); -fx-background-radius: 24; -fx-border-color: rgba(56, 189, 248, 0.35); -fx-border-radius: 24; -fx-border-width: 1.5; -fx-padding: 7 22; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.7), 16, 0, 0, 4);">
+      <!-- ─── Top Cockpit Command Header (Spans full top edge, 0 gap) ─── -->
+      <HBox alignment="CENTER_LEFT" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" spacing="24"
+            style="-fx-background-color: #060c1e; -fx-border-color: rgba(56, 189, 248, 0.4); -fx-border-width: 0 0 1.8 0; -fx-padding: 10 24; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.85), 16, 0, 0, 4);">
          <children>
 
             <!-- HEALTH -->
@@ -76,32 +77,34 @@
                </children>
             </VBox>
 
+            <Region HBox.hgrow="ALWAYS" />
+
+            <!-- Back to Hub Button -->
+            <Button fx:id="backButton" text="🏠 Hub"
+                    onAction="#backToHub"
+                    style="-fx-background-color: #0c1322;
+                           -fx-background-radius: 20;
+                           -fx-text-fill: #38bdf8;
+                           -fx-font-family: 'Verdana';
+                           -fx-font-size: 12px;
+                           -fx-font-weight: bold;
+                           -fx-border-color: #38bdf8;
+                           -fx-border-radius: 20;
+                           -fx-cursor: hand;
+                           -fx-padding: 8 18;
+                           -fx-effect: dropshadow(gaussian, rgba(56, 189, 248, 0.35), 10, 0, 0, 2);"/>
          </children>
       </HBox>
 
-      <!-- ─── Back to Hub Button ──────────────────────────────────── -->
-      <Button fx:id="backButton" text="🏠 Hub"
-              onAction="#backToHub"
-              AnchorPane.rightAnchor="18" AnchorPane.topAnchor="14"
-              style="-fx-background-color: rgba(15, 23, 42, 0.85);
-                     -fx-background-radius: 20;
-                     -fx-text-fill: #38bdf8;
-                     -fx-font-family: 'Verdana';
-                     -fx-font-size: 12px;
-                     -fx-font-weight: bold;
-                     -fx-border-color: #38bdf8;
-                     -fx-border-radius: 20;
-                     -fx-cursor: hand;
-                     -fx-padding: 8 16;
-                     -fx-effect: dropshadow(gaussian, rgba(56, 189, 248, 0.35), 10, 0, 0, 2);"/>
-
-      <!-- ─── Radar Legend (bottom-left) ──────────────────────────── -->
-      <VBox layoutX="18" AnchorPane.bottomAnchor="16" spacing="4"
-            style="-fx-background-color: rgba(5, 10, 25, 0.82); -fx-background-radius: 12; -fx-border-color: rgba(56, 189, 248, 0.25); -fx-border-radius: 12; -fx-padding: 7 14; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 10, 0, 0, 2);">
+      <!-- ─── Bottom Cockpit Footer Console (Spans full bottom edge, 0 gap) ─── -->
+      <HBox alignment="CENTER_LEFT" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.bottomAnchor="0.0" spacing="22"
+            style="-fx-background-color: #060c1e; -fx-border-color: rgba(56, 189, 248, 0.3); -fx-border-width: 1.8 0 0 0; -fx-padding: 8 24; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.85), 14, 0, 0, -2);">
          <children>
-            <Label text="✦ Stars / Planets / Stardust — collect for points &amp; combos" textFill="#7dd3fc" style="-fx-font-family: 'Verdana'; -fx-font-size: 11px;" />
+            <Label fx:id="factLabel" text="Click the falling objects — avoid the red ones!" textFill="#fcd34d" style="-fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-font-weight: bold;" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Label text="✦ Stars / Planets / Stardust: collect for points &amp; combos" textFill="#7dd3fc" style="-fx-font-family: 'Verdana'; -fx-font-size: 11px;" />
             <Label text="☄ Meteor −1 life   ● Black Hole −2 lives   ◆ Dark Matter −10 pts" textFill="#f87171" style="-fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-font-weight: bold;" />
          </children>
-      </VBox>
+      </HBox>
    </children>
 </AnchorPane>

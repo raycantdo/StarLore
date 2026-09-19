@@ -49,6 +49,7 @@ public class ShootingStarController {
     @FXML private Circle life2;
     @FXML private Circle life3;
     @FXML private Button backButton;
+    @FXML private Label factLabel;
     private AudioClip catchSound;
     private AudioClip bonusSound;
     private MediaPlayer gameMusicPlayer;
@@ -102,6 +103,7 @@ public class ShootingStarController {
         bestLabel.setText(String.valueOf(best));
 
         gameCanvas.setOnMousePressed(this::handleMouseClick);
+        setFact(currentFact);
         startCountdown();
         startGameLoop();
     }
@@ -185,13 +187,20 @@ public class ShootingStarController {
         }
     }
 
+    private void setFact(String fact) {
+        this.currentFact = fact;
+        if (factLabel != null) {
+            factLabel.setText(fact);
+        }
+    }
+
     private void resolveHit(CelestialType type, double cx, double cy) {
         if (type.isHazard()) {
             score = Math.max(0, score + type.points);
             lives = Math.max(0, Math.min(MAX_LIVES, lives + type.livesDelta));
             updateLifePips();
             combo = 1;
-            currentFact = type.label + "! " + type.effectLabel;
+            setFact(type.label + "! " + type.effectLabel);
             spawnParticles(cx, cy, type.primaryColor, 12);
             spawnFloatingText(cx, cy, type.effectLabel, Color.web("#ff6b6b"));
         } else {
@@ -200,7 +209,7 @@ public class ShootingStarController {
             score += gained;
             combo++;
             if (combo > maxCombo) maxCombo = combo;
-            currentFact = "Caught " + type.label + "! +" + gained;
+            setFact("Caught " + type.label + "! +" + gained);
             spawnParticles(cx, cy, type.primaryColor, 10);
             spawnFloatingText(cx, cy, "+" + gained, Color.web("#7cffb2"));
 
@@ -351,40 +360,47 @@ public class ShootingStarController {
         double levelSpeedBoost = 1.0 + (level - 1) * 0.18;
         double baseSpeed = 2.1 * levelSpeedBoost * type.speedFactor + (score / 600.0);
 
+        double w = Math.max(800, gameCanvas.getWidth());
+        double h = Math.max(600, gameCanvas.getHeight());
+
         double startX, startY, speedX, speedY;
         int edge = random.nextInt(4);
-        if (edge == 0) {
-            startX = random.nextInt((int) gameCanvas.getWidth());
-            startY = -30;
+        if (edge == 0) { // Spawning off-screen above top
+            startX = random.nextDouble() * w;
+            startY = -40;
             speedX = (random.nextDouble() * 4) - 2;
             speedY = baseSpeed;
-        } else if (edge == 1) {
-            startX = gameCanvas.getWidth() + 30;
-            startY = random.nextInt((int) gameCanvas.getHeight());
+        } else if (edge == 1) { // Spawning off-screen on the right
+            startX = w + 40;
+            startY = random.nextDouble() * h;
             speedX = -baseSpeed;
             speedY = (random.nextDouble() * 2) - 1;
-        } else if (edge == 2) {
-            startX = random.nextInt((int) gameCanvas.getWidth());
-            startY = gameCanvas.getHeight() + 30;
+        } else if (edge == 2) { // Spawning off-screen below bottom
+            startX = random.nextDouble() * w;
+            startY = h + 40;
             speedX = (random.nextDouble() * 4) - 2;
             speedY = -baseSpeed;
-        } else {
-            startX = -30;
-            startY = random.nextInt((int) gameCanvas.getHeight() / 2);
+        } else { // Spawning off-screen on the left
+            startX = -40;
+            startY = random.nextDouble() * h;
             speedX = baseSpeed;
-            speedY = random.nextDouble() * 2 + 1;
+            speedY = (random.nextDouble() * 2) - 1;
         }
 
         objects.add(new FallingObject(startX, startY, speedX, speedY, type, random.nextDouble() * 1000));
     }
 
     private void updateGame() {
+        double w = gameCanvas.getWidth();
+        double h = gameCanvas.getHeight();
+
         for (int i = objects.size() - 1; i >= 0; i--) {
             FallingObject obj = objects.get(i);
             obj.update();
 
-            if (obj.getX() < -50 || obj.getX() > gameCanvas.getWidth() + 50 ||
-                    obj.getY() > gameCanvas.getHeight() + 50 || obj.getY() < -50) {
+            // Only vanish once the star has fully exited the screen at the outer edges
+            if (obj.getX() < -60 || obj.getX() > w + 60 ||
+                    obj.getY() < -60 || obj.getY() > h + 60) {
                 if (!obj.getType().isHazard()) {
                     combo = 1;
                     comboLabel.setText("x" + combo);
@@ -479,10 +495,6 @@ public class ShootingStarController {
         }
 
         scoreLabel.setText(String.valueOf(score));
-
-        gc.setFill(Color.web("#ffffff", 0.85));
-        gc.setFont(Font.font("Verdana", 13));
-        gc.fillText(currentFact, 24, h - 46);
     }
 
     private void drawObject(FallingObject obj) {
