@@ -27,6 +27,10 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.util.*;
+import javafx.concurrent.Task;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.TextInputDialog;
 
 /**
  * DuelController manages:
@@ -148,6 +152,10 @@ public class DuelController {
     private Timeline duelTimer;
     private Timeline aiTimer;
     private final Random random = new Random();
+    // ─── Networked Friends Mode ──────────────────────────────────
+    private NetworkManager network;
+    private boolean isHost;
+    private boolean isNetworked = false;
 
     // ─── Initialization ─────────────────────────────────────────
 
@@ -730,9 +738,155 @@ public class DuelController {
     @FXML
     private void startFriendsMode() {
         if (selectedDef == null) return;
+
+        ButtonType hostBtn = new ButtonType("Host Game");
+        ButtonType joinBtn = new ButtonType("Join Game");
+        ButtonType localBtn = new ButtonType("Same Device (Pass & Play)");
+        Alert modeChoice = new Alert(Alert.AlertType.CONFIRMATION);
+        modeChoice.setTitle("Play with Friend");
+        modeChoice.setHeaderText("How do you want to play together?");
+        modeChoice.getButtonTypes().setAll(hostBtn, joinBtn, localBtn, ButtonType.CANCEL);
+
+        modeChoice.showAndWait().ifPresent(choice -> {
+            if (choice == hostBtn) startHostFlow();
+            else if (choice == joinBtn) startJoinFlow();
+            else if (choice == localBtn) startLocalFriendsMode();
+        });
+    }
+
+    private void startLocalFriendsMode() {
+        isNetworked = false;
         isFriendMode = true;
         isPlayer1Turn = true;
         launchDuelGame(selectedDef);
+    }
+
+    private void startHostFlow() {
+        network = new NetworkManager();
+        isHost = true;
+
+        Alert waiting = new Alert(Alert.AlertType.INFORMATION);
+        waiting.setTitle("Hosting");
+        waiting.setHeaderText("Waiting for your friend to join...");
+        waiting.setContentText("Share your IP address with your friend. Port: " + NetworkManager.DEFAULT_PORT);
+        waiting.getButtonTypes().setAll(ButtonType.CANCEL);
+
+        Task<Void> hostTask = new Task<>() {
+            @Override
+            protected Void call() throws Exception {
+                network.hostAndWaitForClient(NetworkManager.DEFAULT_PORT);
+                return null;
+            }
+        };
+        hostTask.setOnSucceeded(e -> { waiting.close(); beginNetworkedMatch(); });
+        hostTask.setOnFailed(e -> { waiting.close(); showNetworkError("Could not host game", hostTask.getException()); });
+
+        Thread t = new Thread(hostTask);
+        t.setDaemon(true);
+        t.start();
+        waiting.show();
+    }
+
+    private void startJoinFlow() {
+        TextInputDialog ipDialog = new TextInputDialog("127.0.0.1");
+        ipDialog.setTitle("Join Game");
+        ipDialog.setHeaderText("Enter your friend's IP address");
+        ipDialog.showAndWait().ifPresent(ip -> {
+            network = new NetworkManager();
+            isHost = false;
+
+            Alert connecting = new Alert(Alert.AlertType.INFORMATION);
+            connecting.setTitle("Connecting");
+            connecting.setHeaderText("Connecting to " + ip + "...");
+            connecting.getButtonTypes().setAll(ButtonType.CANCEL);
+
+            Task<Void> joinTask = new Task<>() {
+                @Override
+                protected Void call() throws Exception {
+                    network.connectToHost(ip.trim(), NetworkManager.DEFAULT_PORT);
+                    return null;
+                }
+            };
+            joinTask.setOnSucceeded(e -> { connecting.close(); beginNetworkedMatch(); });
+            joinTask.setOnFailed(e -> { connecting.close(); showNetworkError("Could not connect", joinTask.getException()); });
+
+            Thread t = new Thread(joinTask);
+            t.setDaemon(true);
+            t.start();
+            connecting.show();
+        });
+    }
+
+    private void showNetworkError(String header, Throwable ex) {
+        Alert error = new Alert(Alert.AlertType.ERROR);
+        error.setTitle("Network Error");
+        error.setHeaderText(header);
+        error.setContentText(ex != null ? ex.getMessage() : "Unknown error");
+        error.showAndWait();
+    }
+
+    private void beginNetworkedMatch() {
+        isNetworked = true;
+        isFriendMode = true;
+        isPlayer1Turn = true; // host always moves first
+
+        network.startListening(this::handleNetworkMessage, this::handleDisconnect);
+
+        if (isHost) {
+            network.send("CONST:" + selectedDef.name);
+            launchDuelGame(selectedDef);
+        }
+        // The joiner waits here — launchDuelGame() fires once "CONST:" arrives, below
+    }
+
+    private void handleNetworkMessage(String message) {
+        if (message.startsWith("CONST:")) {
+            ConstellationDef def = findConstellation(message.substring("CONST:".length()));
+            if (def != null) {
+                selectedDef = def;
+                launchDuelGame(def);
+            }
+        } else if (message.startsWith("LINK:")) {
+            String[] parts = message.substring("LINK:".length()).split(",");
+            applyRemoteLink(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
+        } else if (message.equals("REMATCH")) {
+            resultOverlay.setVisible(false);
+            launchDuelGame(currentDuelDef);
+        }
+    }
+
+    private void handleDisconnect() {
+        if (turnIndicatorLabel != null) turnIndicatorLabel.setText("Your friend disconnected.");
+        duelActive = false;
+        if (duelTimer != null) duelTimer.stop();
+        if (aiTimer != null) aiTimer.stop();
+    }
+
+    private boolean isMyTurn() {
+        return !isNetworked || (isPlayer1Turn == isHost);
+    }
+
+    private void applyRemoteLink(int a, int b) {
+        if (!duelActive || currentDuelDef == null) return;
+        int[] link = getCanonicalLink(a, b);
+        if (containsLink(p1Links, link)) return; // already applied locally
+
+        p1Links.add(link);
+        player2OrAiScore += 10;
+        aiScoreLabel.setText("Score: " + player2OrAiScore);
+
+        Color remoteColor = isHost ? Color.web("#fbbf24") : Color.web("#38bdf8");
+        friendLinkColors.put(link, remoteColor);
+
+        isPlayer1Turn = !isPlayer1Turn;
+        turnIndicatorLabel.setText(isMyTurn() ? "Your turn! Click 2 stars to connect." : "Waiting for your friend...");
+
+        selectedStarIdx = -1;
+        drawCurrentBoards();
+
+        if (p1Links.size() == currentDuelDef.links.length) {
+            finishDuel();
+        }
     }
 
     private void launchDuelGame(ConstellationDef def) {
@@ -831,6 +985,8 @@ public class DuelController {
     }
 
     private void handleStarClicked(int clickedIdx) {
+        if (isNetworked && !isMyTurn()) return; // not your turn yet
+
         if (selectedStarIdx == -1) {
             selectedStarIdx = clickedIdx;
             drawCurrentBoards();
@@ -857,12 +1013,17 @@ public class DuelController {
                     Color playerColor = isPlayer1Turn ? Color.web("#38bdf8") : Color.web("#fbbf24");
                     friendLinkColors.put(link, playerColor);
                     isPlayer1Turn = !isPlayer1Turn;
-                    turnIndicatorLabel.setText((isPlayer1Turn ? "Player 1's" : "Player 2's") + " turn! Click 2 stars to connect.");
+                    turnIndicatorLabel.setText(isNetworked
+                            ? (isMyTurn() ? "Your turn! Click 2 stars to connect." : "Waiting for your friend...")
+                            : ((isPlayer1Turn ? "Player 1's" : "Player 2's") + " turn! Click 2 stars to connect."));
+                }
+
+                if (isNetworked) {
+                    network.send("LINK:" + a + "," + b);
                 }
 
                 drawCurrentBoards();
 
-                // Check victory condition
                 if (p1Links.size() == currentDuelDef.links.length) {
                     finishDuel();
                 }
@@ -1063,7 +1224,15 @@ public class DuelController {
     @FXML
     private void rematch() {
         resultOverlay.setVisible(false);
-        launchDuelGame(currentDuelDef);
+        if (isNetworked) {
+            if (isHost) {
+                network.send("REMATCH");
+                launchDuelGame(currentDuelDef);
+            }
+            // The joiner's rematch happens automatically via handleNetworkMessage above
+        } else {
+            launchDuelGame(currentDuelDef);
+        }
     }
 
     @FXML
@@ -1083,6 +1252,7 @@ public class DuelController {
 
     @FXML
     private void backToHub() {
+        if (network != null) network.close();
         duelActive = false;
         if (mapAnimTimer != null) mapAnimTimer.stop();
         if (duelTimer != null) duelTimer.stop();
