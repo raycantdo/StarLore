@@ -384,7 +384,25 @@ public class GameHubController {
     @FXML
     private void launchMythQuiz() {
         transitionOverlay.setVisible(true);
-        // Navigate when ready
+        // Assuming playExamTransition exists, otherwise use playSparkTransition
+        playSparkTransition(() -> {
+            stopHubAnimation();
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("MythQuizView.fxml"));
+                Parent root = loader.load();
+                MythQuizController controller = loader.getController();
+                controller.setPlayer(currentPlayer);
+                root.setOpacity(0);
+                Stage stage = (Stage) quizCard.getScene().getWindow();
+                SceneManager.switchScene(stage, root);
+                FadeTransition fadeIn = new FadeTransition(Duration.seconds(1), root);
+                fadeIn.setFromValue(0);
+                fadeIn.setToValue(1);
+                fadeIn.play();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     @FXML

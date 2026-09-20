@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.Group?>
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane fx:id="rootStackPane" prefHeight="700.0" prefWidth="1000.0" style="-fx-background-color: #020504;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.starlore.starlore.MythQuizController">
+    <children>
+        <Canvas fx:id="quizCanvas" height="700.0" width="1000.0" />
+
+        <BorderPane pickOnBounds="false">
+
+            <top>
+                <HBox alignment="CENTER_LEFT" prefHeight="45.0" style="-fx-background-color: rgba(2, 10, 8, 0.9); -fx-border-color: rgba(52, 211, 153, 0.4); -fx-border-width: 0 0 2 0;" BorderPane.alignment="CENTER">
+                    <children>
+                        <Button mnemonicParsing="false" onAction="#backToHub" text="◀ ESC TO HUB" style="-fx-background-color: rgba(239, 68, 68, 0.15); -fx-text-fill: #fca5a5; -fx-font-family: 'Impact'; -fx-font-size: 14px; -fx-letter-spacing: 1; -fx-border-color: #ef4444; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 5 15; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(239, 68, 68, 0.4), 10, 0, 0, 0);" />
+                        <Region prefWidth="30.0" />
+                        <Label text="ASTRAL ORACLE: ONLINE" style="-fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #10b981; -fx-letter-spacing: 2;" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Label fx:id="questionCounterLabel" text="[ QUERY 01 / 20 ]" style="-fx-font-family: 'Verdana'; -fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #34d399; -fx-letter-spacing: 4;" />
+                        <Region HBox.hgrow="ALWAYS" />
+
+                        <HBox spacing="20" alignment="CENTER">
+                            <Label fx:id="dustLabel" text="✦ DUST: 0" style="-fx-font-family: 'Verdana'; -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #bae6fd; -fx-letter-spacing: 2;" />
+                            <Label fx:id="scoreLabel" text="WISDOM: 0" style="-fx-font-family: 'Verdana'; -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #fde047; -fx-letter-spacing: 2; -fx-effect: dropshadow(gaussian, #facc15, 8, 0.4, 0, 0);" />
+                        </HBox>
+                    </children>
+                    <padding>
+                        <Insets left="20.0" right="30.0" />
+                    </padding>
+                </HBox>
+            </top>
+
+            <center>
+                <StackPane BorderPane.alignment="CENTER">
+                    <children>
+                        <StackPane fx:id="outerRing" maxHeight="500.0" maxWidth="500.0" style="-fx-border-color: rgba(52, 211, 153, 0.05); -fx-border-radius: 500; -fx-border-width: 1; -fx-border-style: dashed;" />
+                        <StackPane fx:id="innerRing" maxHeight="400.0" maxWidth="400.0" style="-fx-border-color: rgba(16, 185, 129, 0.1); -fx-border-radius: 500; -fx-border-width: 2;" />
+
+                        <AnchorPane fx:id="astrolabeWheel" maxHeight="400.0" maxWidth="400.0">
+                            <children>
+                                <StackPane fx:id="glassTrack" layoutX="25.0" layoutY="25.0" prefHeight="350.0" prefWidth="350.0" style="-fx-background-color: rgba(6, 25, 20, 0.6); -fx-border-color: rgba(52, 211, 153, 0.5); -fx-border-radius: 500; -fx-border-width: 3; -fx-effect: dropshadow(gaussian, rgba(16, 185, 129, 0.3), 30, 0, 0, 0);" />
+
+                                <StackPane fx:id="ans0Pane" layoutX="120.0" layoutY="-30.0" minHeight="60.0" maxHeight="60.0" minWidth="160.0" maxWidth="160.0" style="-fx-background-color: rgba(2, 5, 15, 0.95); -fx-border-color: #38bdf8; -fx-background-radius: 8; -fx-border-radius: 8; -fx-border-width: 2.5;">
+                                    <children>
+                                        <Label fx:id="bracket0" text="▼ TARGET LOCK ▼" translateY="-38.0" style="-fx-font-family: 'Impact'; -fx-font-size: 12px; -fx-text-fill: #020504; -fx-background-color: #fde047; -fx-padding: 2 10; -fx-background-radius: 4; -fx-border-color: #ffffff; -fx-border-radius: 4; -fx-border-width: 1; -fx-effect: dropshadow(gaussian, #fde047, 10, 0.5, 0, 0);" visible="false"/>
+                                        <Label fx:id="ans0Label" text="Answer A" textAlignment="CENTER" wrapText="true" style="-fx-font-family: 'Verdana'; -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #e2e8f0; -fx-padding: 6;" />
+                                    </children>
+                                </StackPane>
+
+                                <StackPane fx:id="ans1Pane" layoutX="320.0" layoutY="170.0" minHeight="60.0" maxHeight="60.0" minWidth="160.0" maxWidth="160.0" style="-fx-background-color: rgba(2, 5, 15, 0.95); -fx-border-color: #38bdf8; -fx-background-radius: 8; -fx-border-radius: 8; -fx-border-width: 2.5;">
+                                    <children>
+                                        <Label fx:id="bracket1" text="▼ TARGET LOCK ▼" translateY="-38.0" style="-fx-font-family: 'Impact'; -fx-font-size: 12px; -fx-text-fill: #020504; -fx-background-color: #fde047; -fx-padding: 2 10; -fx-background-radius: 4; -fx-border-color: #ffffff; -fx-border-radius: 4; -fx-border-width: 1; -fx-effect: dropshadow(gaussian, #fde047, 10, 0.5, 0, 0);" visible="false"/>
+                                        <Label fx:id="ans1Label" text="Answer B" textAlignment="CENTER" wrapText="true" style="-fx-font-family: 'Verdana'; -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #e2e8f0; -fx-padding: 6;" />
+                                    </children>
+                                </StackPane>
+
+                                <StackPane fx:id="ans2Pane" layoutX="120.0" layoutY="370.0" minHeight="60.0" maxHeight="60.0" minWidth="160.0" maxWidth="160.0" style="-fx-background-color: rgba(2, 5, 15, 0.95); -fx-border-color: #38bdf8; -fx-background-radius: 8; -fx-border-radius: 8; -fx-border-width: 2.5;">
+                                    <children>
+                                        <Label fx:id="bracket2" text="▼ TARGET LOCK ▼" translateY="-38.0" style="-fx-font-family: 'Impact'; -fx-font-size: 12px; -fx-text-fill: #020504; -fx-background-color: #fde047; -fx-padding: 2 10; -fx-background-radius: 4; -fx-border-color: #ffffff; -fx-border-radius: 4; -fx-border-width: 1; -fx-effect: dropshadow(gaussian, #fde047, 10, 0.5, 0, 0);" visible="false"/>
+                                        <Label fx:id="ans2Label" text="Answer C" textAlignment="CENTER" wrapText="true" style="-fx-font-family: 'Verdana'; -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #e2e8f0; -fx-padding: 6;" />
+                                    </children>
+                                </StackPane>
+
+                                <StackPane fx:id="ans3Pane" layoutX="-80.0" layoutY="170.0" minHeight="60.0" maxHeight="60.0" minWidth="160.0" maxWidth="160.0" style="-fx-background-color: rgba(2, 5, 15, 0.95); -fx-border-color: #38bdf8; -fx-background-radius: 8; -fx-border-radius: 8; -fx-border-width: 2.5;">
+                                    <children>
+                                        <Label fx:id="bracket3" text="▼ TARGET LOCK ▼" translateY="-38.0" style="-fx-font-family: 'Impact'; -fx-font-size: 12px; -fx-text-fill: #020504; -fx-background-color: #fde047; -fx-padding: 2 10; -fx-background-radius: 4; -fx-border-color: #ffffff; -fx-border-radius: 4; -fx-border-width: 1; -fx-effect: dropshadow(gaussian, #fde047, 10, 0.5, 0, 0);" visible="false"/>
+                                        <Label fx:id="ans3Label" text="Answer D" textAlignment="CENTER" wrapText="true" style="-fx-font-family: 'Verdana'; -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #e2e8f0; -fx-padding: 6;" />
+                                    </children>
+                                </StackPane>
+                            </children>
+                        </AnchorPane>
+
+                        <StackPane fx:id="questionCore" maxHeight="210.0" maxWidth="210.0" style="-fx-background-color: rgba(2, 5, 15, 0.95); -fx-border-color: linear-gradient(to bottom right, #34d399, #064e3b); -fx-background-radius: 200; -fx-border-radius: 200; -fx-border-width: 4; -fx-effect: dropshadow(gaussian, rgba(16, 185, 129, 0.3), 30, 0, 0, 0);">
+                            <children>
+                                <VBox alignment="CENTER" spacing="8.0" style="-fx-padding: 15;">
+                                    <children>
+                                        <Label fx:id="feverIcon" text="🔮" style="-fx-font-size: 24px; -fx-effect: dropshadow(gaussian, #34d399, 15, 0.5, 0, 0);" />
+                                        <Label fx:id="questionLabel" text="Loading Oracle Query..." textAlignment="CENTER" wrapText="true" style="-fx-font-family: 'Georgia'; -fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #ffffff; -fx-effect: dropshadow(gaussian, black, 4, 0.8, 1, 1); -fx-line-spacing: 2;" />
+                                    </children>
+                                </VBox>
+                            </children>
+                        </StackPane>
+
+                        <!-- Result Overlay -->
+                        <StackPane fx:id="resultOverlay" style="-fx-background-color: rgba(2, 5, 15, 0.85); -fx-background-radius: 24;" visible="false" maxWidth="600.0" maxHeight="600.0">
+                            <children>
+                                <VBox alignment="CENTER" spacing="15.0">
+                                    <children>
+                                        <Label fx:id="resultTitle" text="CORRECT ALIGNMENT" style="-fx-font-family: 'Impact'; -fx-font-size: 48px; -fx-text-fill: #34d399; -fx-effect: dropshadow(gaussian, #10b981, 30, 0.6, 0, 0); -fx-letter-spacing: 2;" />
+                                        <Label fx:id="resultDesc" text="+10 WISDOM ACQUIRED" style="-fx-font-family: 'Verdana'; -fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: white; -fx-letter-spacing: 3;" />
+
+                                        <VBox fx:id="achievementBox" alignment="CENTER" spacing="15.0" visible="false" style="-fx-padding: 20 0 0 0;">
+                                            <children>
+                                                <Label text="✦ CELESTIAL MILESTONE UNLOCKED ✦" style="-fx-font-family: 'Verdana'; -fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #fcd34d; -fx-letter-spacing: 5;" />
+                                                <StackPane style="-fx-background-color: linear-gradient(to bottom right, rgba(245, 158, 11, 0.3), rgba(217, 119, 6, 0.1)); -fx-border-color: #fbbf24; -fx-border-radius: 16; -fx-background-radius: 16; -fx-border-width: 3; -fx-padding: 15 40; -fx-effect: dropshadow(gaussian, rgba(251, 191, 36, 0.4), 40, 0, 0, 0);">
+                                                    <children>
+                                                        <VBox alignment="CENTER" spacing="5">
+                                                            <children>
+                                                                <Label fx:id="achievementLabel" text="ORACLE'S INITIATE" style="-fx-font-family: 'Impact'; -fx-font-size: 36px; -fx-text-fill: #ffffff; -fx-effect: dropshadow(gaussian, #fbbf24, 20, 0.7, 0, 0); -fx-letter-spacing: 2;" />
+                                                                <Label fx:id="rewardLabel" text="+ 50 STAR DUST AWARDED" style="-fx-font-family: 'Verdana'; -fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #34d399; -fx-effect: dropshadow(gaussian, #10b981, 10, 0.5, 0, 0); -fx-letter-spacing: 1;" />
+                                                            </children>
+                                                        </VBox>
+                                                    </children>
+                                                </StackPane>
+                                            </children>
+                                        </VBox>
+                                    </children>
+                                </VBox>
+                            </children>
+                        </StackPane>
+
+                    </children>
+                </StackPane>
+            </center>
+
+            <bottom>
+                <VBox alignment="CENTER" spacing="15.0" BorderPane.alignment="CENTER" pickOnBounds="false">
+                    <BorderPane.margin>
+                        <Insets bottom="20.0" top="5.0" />
+                    </BorderPane.margin>
+                    <children>
+
+                        <!-- TACTICAL LIFELINES -->
+                        <HBox alignment="CENTER" spacing="15.0">
+                            <children>
+                                <Button fx:id="btnBlackHole" mnemonicParsing="false" onAction="#useBlackHole" text="🌑 BLACK HOLE (50 DUST)" style="-fx-background-color: rgba(147, 51, 234, 0.2); -fx-text-fill: #d8b4fe; -fx-font-family: 'Verdana'; -fx-font-size: 10px; -fx-font-weight: bold; -fx-border-color: #a855f7; -fx-border-radius: 20; -fx-background-radius: 20; -fx-border-width: 1.5; -fx-padding: 6 15; -fx-cursor: hand;" />
+                                <Button fx:id="btnAegisShield" mnemonicParsing="false" onAction="#useAegisShield" text="🛡️ AEGIS SHIELD (75 DUST)" style="-fx-background-color: rgba(56, 189, 248, 0.2); -fx-text-fill: #bae6fd; -fx-font-family: 'Verdana'; -fx-font-size: 10px; -fx-font-weight: bold; -fx-border-color: #38bdf8; -fx-border-radius: 20; -fx-background-radius: 20; -fx-border-width: 1.5; -fx-padding: 6 15; -fx-cursor: hand;" />
+                                <Button fx:id="btnWhisper" mnemonicParsing="false" onAction="#useOraclesWhisper" text="👁️ ORACLE'S WHISPER (100 DUST)" style="-fx-background-color: rgba(250, 204, 21, 0.2); -fx-text-fill: #fef08a; -fx-font-family: 'Verdana'; -fx-font-size: 10px; -fx-font-weight: bold; -fx-border-color: #facc15; -fx-border-radius: 20; -fx-background-radius: 20; -fx-border-width: 1.5; -fx-padding: 6 15; -fx-cursor: hand;" />
+                            </children>
+                        </HBox>
+
+                        <HBox alignment="CENTER" spacing="25.0" pickOnBounds="false">
+                            <children>
+                                <Button fx:id="spinLeftBtn" mnemonicParsing="false" onAction="#spinLeft" text="⟲ REVOLVE LEFT" style="-fx-background-color: rgba(2, 15, 10, 0.8); -fx-text-fill: #34d399; -fx-font-family: 'Impact'; -fx-font-size: 14px; -fx-letter-spacing: 2; -fx-border-color: #34d399; -fx-border-radius: 8; -fx-background-radius: 8; -fx-border-width: 2; -fx-padding: 8 15; -fx-cursor: hand;" />
+                                <Button fx:id="confirmButton" mnemonicParsing="false" onAction="#submitAnswer" text="LOCK ALIGNMENT" style="-fx-background-color: linear-gradient(to right, rgba(16, 185, 129, 0.6), rgba(5, 150, 105, 0.8)); -fx-text-fill: #ffffff; -fx-font-family: 'Impact'; -fx-font-size: 20px; -fx-letter-spacing: 3; -fx-border-color: #6ee7b7; -fx-border-radius: 10; -fx-background-radius: 10; -fx-border-width: 2.5; -fx-padding: 10 30; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, #34d399, 20, 0.5, 0, 0);" />
+                                <Button fx:id="spinRightBtn" mnemonicParsing="false" onAction="#spinRight" text="REVOLVE RIGHT ⟳" style="-fx-background-color: rgba(2, 15, 10, 0.8); -fx-text-fill: #34d399; -fx-font-family: 'Impact'; -fx-font-size: 14px; -fx-letter-spacing: 2; -fx-border-color: #34d399; -fx-border-radius: 8; -fx-background-radius: 8; -fx-border-width: 2; -fx-padding: 8 15; -fx-cursor: hand;" />
+                            </children>
+                        </HBox>
+                    </children>
+                </VBox>
+            </bottom>
+        </BorderPane>
+
+    </children>
+</StackPane>
