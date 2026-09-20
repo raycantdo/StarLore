@@ -296,6 +296,12 @@ public class BattleController {
 
         if (playerWon) {
             battleTextLabel.setText("VICTORY! Medusa has been defeated!");
+
+            // Award 100 StarDust and permanently save it to MySQL
+            if (currentPlayer != null) {
+                ScoreService.addStarDust(currentPlayer, 100);
+            }
+
             // Medusa Death (Row 5, 4 frames)
             playMedusaAnim(5, 0, 4, 1000, false);
             playPerseusAnim(0, 2, 1, 800, true);

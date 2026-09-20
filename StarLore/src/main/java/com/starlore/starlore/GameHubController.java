@@ -16,6 +16,7 @@ import javafx.scene.paint.LinearGradient;
 import javafx.scene.paint.RadialGradient;
 import javafx.scene.paint.Stop;
 import javafx.stage.Stage;
+import javafx.scene.Scene;
 import javafx.util.Duration;
 
 import java.util.ArrayList;
@@ -31,6 +32,7 @@ public class GameHubController {
     @FXML private Button profileBtn;
     @FXML private Button leaderboardBtn;
     @FXML private Button signOutBtn;
+
 
     @FXML private StackPane storyCard;
     @FXML private StackPane duelCard;
@@ -333,7 +335,25 @@ public class GameHubController {
     // ─── Core Navigation ────────────────────────────────────────
 
     @FXML private void openProfile() { System.out.println("Opening Profile..."); }
-    @FXML private void openLeaderboard() { System.out.println("Opening Leaderboard..."); }
+    @FXML
+
+    private void openLeaderboard() {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("Leaderboard.fxml")
+            );
+
+            Parent root = loader.load();
+
+            Stage stage = (Stage) leaderboardBtn.getScene().getWindow();
+
+            stage.setScene(new Scene(root));
+            stage.setTitle("StarLore - Leaderboard");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     @FXML
     private void signOut() {
@@ -384,8 +404,8 @@ public class GameHubController {
     @FXML
     private void launchMythQuiz() {
         transitionOverlay.setVisible(true);
-        // Assuming playExamTransition exists, otherwise use playSparkTransition
-        playSparkTransition(() -> {
+        // Changed from playSparkTransition to the new playQuizTransition
+        playQuizTransition(() -> {
             stopHubAnimation();
             try {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("MythQuizView.fxml"));
@@ -644,6 +664,78 @@ public class GameHubController {
             arrowAnim.play();
         });
         msgPause.play();
+    }
+
+     private void playQuizTransition(Runnable onComplete) {
+        GraphicsContext gc = transitionCanvas.getGraphicsContext2D();
+        double initW = getOverlayWidth();
+        double initH = getOverlayHeight();
+
+        gc.setFill(Color.rgb(4, 12, 18, 0.95));
+        gc.fillRect(0, 0, initW, initH);
+
+        transitionLabel.setText("✦ CONSULTING THE ASTRAL ORACLE ✦");
+        transitionLabel.setStyle("-fx-font-family: 'Verdana'; -fx-font-size: 24px; -fx-font-weight: bold; -fx-text-fill: #a5f3fc; -fx-effect: dropshadow(gaussian, #06b6d4, 18, 0.7, 0, 0);");
+        transitionLabel.setVisible(true);
+
+        double[] frame = {0};
+        Timeline quizTimeline = new Timeline();
+
+        // 72 cycles * 35ms = ~2.5 seconds total
+        quizTimeline.setCycleCount(72);
+
+        KeyFrame kf = new KeyFrame(Duration.millis(35), e -> {
+            frame[0]++;
+            double w = getOverlayWidth();
+            double h = getOverlayHeight();
+            double cx = w / 2.0;
+            double cy = h / 2.0;
+            double t = frame[0];
+
+            gc.clearRect(0, 0, w, h);
+            gc.setFill(Color.rgb(4, 12, 18, 0.95));
+            gc.fillRect(0, 0, w, h);
+
+            gc.save();
+            gc.translate(cx, cy);
+
+            double radius = t * 18;
+            double alpha = Math.max(0, 1.0 - (t / 72.0));
+            gc.setStroke(Color.rgb(34, 211, 238, alpha));
+            gc.setLineWidth(2.5);
+            gc.strokeOval(-radius, -radius, radius * 2, radius * 2);
+
+            gc.setStroke(Color.rgb(165, 243, 252, alpha * 0.5));
+            gc.strokeOval(-radius * 0.6, -radius * 0.6, radius * 1.2, radius * 1.2);
+
+            gc.rotate(t * 6);
+            gc.setStroke(Color.rgb(6, 182, 212, Math.min(1.0, t * 0.05)));
+            gc.setLineWidth(1.5);
+
+            double rectSize = 80 + (Math.sin(t * 0.1) * 20);
+            gc.strokeRect(-rectSize/2, -rectSize/2, rectSize, rectSize);
+            gc.rotate(45);
+            gc.strokeRect(-rectSize/2, -rectSize/2, rectSize, rectSize);
+
+            double pulse = Math.abs(Math.sin(t * 0.2)) * 12;
+            gc.setFill(Color.rgb(34, 211, 238, 0.9));
+
+            double[] xPoints = {0, 20 + pulse, 0, -20 - pulse};
+            double[] yPoints = {-35 - pulse, 0, 35 + pulse, 0};
+            gc.fillPolygon(xPoints, yPoints, 4);
+
+            gc.setFill(Color.WHITE);
+            gc.fillOval(-6, -6, 12, 12);
+
+            gc.restore();
+        });
+
+        quizTimeline.getKeyFrames().add(kf);
+        quizTimeline.setOnFinished(e -> {
+            transitionLabel.setVisible(false);
+            fadeOutAndNavigate(onComplete);
+        });
+        quizTimeline.play();
     }
 
     private void drawLoveArrow(GraphicsContext gc, double x, double y, double angle) {

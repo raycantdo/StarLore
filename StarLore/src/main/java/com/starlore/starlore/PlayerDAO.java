@@ -118,12 +118,14 @@ public class PlayerDAO {
                     set.add(constellationName.toUpperCase());
                     String updatedList = String.join(",", set);
 
-                    String updateSQL = "UPDATE players SET enlightened_constellations = ?, constellations_mastered = ?, total_star_dust = ? WHERE username = ?";
+                    String updateSQL =
+                            "UPDATE players SET enlightened_constellations = ?, " +
+                                    "constellations_mastered = ? " +
+                                    "WHERE username = ?";
                     try (PreparedStatement uStmt = conn.prepareStatement(updateSQL)) {
                         uStmt.setString(1, updatedList);
                         uStmt.setInt(2, set.size());
-                        uStmt.setInt(3, totalStarDust);
-                        uStmt.setString(4, username);
+                        uStmt.setString(3, username);
                         uStmt.executeUpdate();
                     }
                 } catch (Exception ignored) {}
@@ -168,9 +170,60 @@ public class PlayerDAO {
         // Ensure players table has enlightened_constellations column
         try {
             String alterSQL = "ALTER TABLE players ADD COLUMN enlightened_constellations TEXT";
+            // Ensure players table has total_star_dust column
+            String starDustAlterSQL =
+                    "ALTER TABLE players ADD COLUMN total_star_dust INT NOT NULL DEFAULT 0";
+
+            try (PreparedStatement stmt = conn.prepareStatement(starDustAlterSQL)) {
+                stmt.executeUpdate();
+            } catch (Exception ignored) {}
             try (PreparedStatement stmt = conn.prepareStatement(alterSQL)) {
                 stmt.executeUpdate();
             }
         } catch (Exception ignored) {}
+    }
+    public void updateStarDust(String username, int totalStarDust) {
+        if (username == null) return;
+
+        String sql = "UPDATE players SET total_star_dust = ? WHERE username = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            stmt.setInt(1, totalStarDust);
+            stmt.setString(2, username);
+
+            stmt.executeUpdate();
+
+        } catch (Exception e) {
+            System.err.println("[PlayerDAO] Error updating StarDust: " + e.getMessage());
+        }
+    }
+    public java.util.List<String[]> getLeaderboard() {
+        java.util.List<String[]> leaderboard = new java.util.ArrayList<>();
+
+        String sql = "SELECT username, total_star_dust " +
+                "FROM players " +
+                "ORDER BY total_star_dust DESC";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                String username = rs.getString("username");
+                int starDust = rs.getInt("total_star_dust");
+
+                leaderboard.add(new String[]{
+                        username,
+                        String.valueOf(starDust)
+                });
+            }
+
+        } catch (Exception e) {
+            System.err.println("[PlayerDAO] Error loading leaderboard: " + e.getMessage());
+        }
+
+        return leaderboard;
     }
 }

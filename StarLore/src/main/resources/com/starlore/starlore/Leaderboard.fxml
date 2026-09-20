@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<StackPane fx:id="rootStackPane" prefHeight="700.0" prefWidth="1000.0" style="-fx-background-color: #020504;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.starlore.starlore.LeaderboardController">
+    <children>
+        <Canvas fx:id="bgCanvas" height="700.0" width="1000.0" />
+
+        <BorderPane pickOnBounds="false">
+            <!-- ─── TOP HUD ─── -->
+            <top>
+                <HBox alignment="CENTER_LEFT" prefHeight="45.0" style="-fx-background-color: rgba(2, 10, 8, 0.9); -fx-border-color: rgba(56, 189, 248, 0.4); -fx-border-width: 0 0 2 0;" BorderPane.alignment="CENTER">
+                    <children>
+                        <Button mnemonicParsing="false" onAction="#goBack" text="◀ ESC TO HUB" style="-fx-background-color: rgba(239, 68, 68, 0.15); -fx-text-fill: #fca5a5; -fx-font-family: 'Impact'; -fx-font-size: 14px; -fx-letter-spacing: 1; -fx-border-color: #ef4444; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 5 15; -fx-cursor: hand;" />
+
+                        <Region prefWidth="30.0" />
+                        <Label text="ASTRAL NETWORK" style="-fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #38bdf8; -fx-letter-spacing: 2;" />
+
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Label text="VANGUARD RANKINGS" style="-fx-font-family: 'Verdana'; -fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #ffffff; -fx-letter-spacing: 4;" />
+                        <Region HBox.hgrow="ALWAYS" />
+
+                        <Label text="LIVE SYNC" style="-fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #10b981; -fx-letter-spacing: 2;" />
+                    </children>
+                    <padding>
+                        <Insets left="20.0" right="30.0" />
+                    </padding>
+                </HBox>
+            </top>
+
+            <!-- ─── CENTER: EXACTLY 800px WIDE CONTAINER ─── -->
+            <center>
+                <VBox alignment="TOP_CENTER" spacing="20.0" BorderPane.alignment="CENTER">
+                    <BorderPane.margin>
+                        <Insets bottom="30.0" top="30.0" />
+                    </BorderPane.margin>
+                    <children>
+
+                        <VBox alignment="CENTER" spacing="5.0">
+                            <children>
+                                <Label text="HALL OF LEGENDS" style="-fx-font-family: 'Impact'; -fx-font-size: 48px; -fx-text-fill: #f8fafc; -fx-letter-spacing: 3;" />
+                                <Label text="TOP COMMANDERS IN THE ASTRAL SECTOR" style="-fx-font-family: 'Verdana'; -fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #94a3b8; -fx-letter-spacing: 4;" />
+                            </children>
+                            <VBox.margin>
+                                <Insets bottom="15.0" />
+                            </VBox.margin>
+                        </VBox>
+
+                        <!-- LOCKED 800px HEADER -->
+                        <HBox alignment="CENTER_LEFT" minWidth="800.0" maxWidth="800.0" prefWidth="800.0" style="-fx-padding: 0 30 10 30; -fx-border-color: rgba(56, 189, 248, 0.3); -fx-border-width: 0 0 1 0;">
+                            <children>
+                                <Label minWidth="80.0" prefWidth="80.0" alignment="CENTER" text="RANK" style="-fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #38bdf8;" />
+                                <Region minWidth="30.0" prefWidth="30.0" />
+                                <Label minWidth="300.0" prefWidth="300.0" alignment="CENTER_LEFT" text="COMMANDER" style="-fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #38bdf8;" />
+                                <Region HBox.hgrow="ALWAYS" />
+                                <Label minWidth="150.0" prefWidth="150.0" alignment="CENTER_RIGHT" text="RATING" style="-fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-font-weight: bold; -fx-text-fill: #38bdf8;" />
+                            </children>
+                        </HBox>
+
+                        <!-- Dynamic List Container -->
+                        <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent; -fx-cache: false;" VBox.vgrow="ALWAYS">
+                            <content>
+                                <VBox fx:id="leaderboardList" alignment="TOP_CENTER" spacing="12.0" style="-fx-background-color: transparent; -fx-padding: 10 0 20 0;" />
+                            </content>
+                        </ScrollPane>
+
+                    </children>
+                </VBox>
+            </center>
+        </BorderPane>
+    </children>
+</StackPane>

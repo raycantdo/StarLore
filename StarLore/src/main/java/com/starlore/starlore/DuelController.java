@@ -1942,10 +1942,16 @@ public class DuelController {
         if (isVictory && currentDuelDef != null) {
             if (currentPlayer != null) {
                 currentPlayer.enlightenConstellation(currentDuelDef.name);
-                currentPlayer.setTotalStarDust(currentPlayer.getTotalStarDust() + 50);
 
-                // Save to database permanently under player nickname
-                playerDAO.saveEnlightenedConstellation(currentPlayer.getUsername(), currentDuelDef.name, currentPlayer.getTotalStarDust());
+                // Add +50 StarDust and permanently save the new total
+                ScoreService.addStarDust(currentPlayer, 50);
+
+                // Save the enlightened constellation
+                playerDAO.saveEnlightenedConstellation(
+                        currentPlayer.getUsername(),
+                        currentDuelDef.name,
+                        currentPlayer.getTotalStarDust()
+                );
             }
         }
 

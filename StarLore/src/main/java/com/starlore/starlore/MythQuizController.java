@@ -174,7 +174,7 @@ public class MythQuizController {
     @FXML
     private void useBlackHole() {
         if (currentPlayer.getTotalStarDust() < 50) return;
-        currentPlayer.setTotalStarDust(currentPlayer.getTotalStarDust() - 50);
+        ScoreService.spendStarDust(currentPlayer, 50);
         updateLifelineButtons();
         btnBlackHole.setDisable(true); // Once per question
 
@@ -195,7 +195,7 @@ public class MythQuizController {
     @FXML
     private void useAegisShield() {
         if (currentPlayer.getTotalStarDust() < 75 || isShieldActive) return;
-        currentPlayer.setTotalStarDust(currentPlayer.getTotalStarDust() - 75);
+        ScoreService.spendStarDust(currentPlayer, 75);
         isShieldActive = true;
         updateLifelineButtons();
 
@@ -207,7 +207,7 @@ public class MythQuizController {
     @FXML
     private void useOraclesWhisper() {
         if (currentPlayer.getTotalStarDust() < 100 || isSpinning) return;
-        currentPlayer.setTotalStarDust(currentPlayer.getTotalStarDust() - 100);
+        ScoreService.spendStarDust(currentPlayer, 100);
         updateLifelineButtons();
         btnWhisper.setDisable(true);
 
@@ -441,12 +441,22 @@ public class MythQuizController {
         achievementLabel.setText(title);
         rewardLabel.setText("+ " + dustReward + " STAR DUST AWARDED");
         achievementBox.setVisible(true);
-        if(currentPlayer != null) currentPlayer.setTotalStarDust(currentPlayer.getTotalStarDust() + dustReward);
+
+        if (currentPlayer != null) {
+            ScoreService.addStarDust(currentPlayer, dustReward);
+        }
+
         updateLifelineButtons();
 
-        ScaleTransition badgePop = new ScaleTransition(Duration.millis(500), achievementBox);
-        badgePop.setFromX(0); badgePop.setFromY(0);
-        badgePop.setToX(1.0); badgePop.setToY(1.0);
+        ScaleTransition badgePop = new ScaleTransition(
+                Duration.millis(500),
+                achievementBox
+        );
+
+        badgePop.setFromX(0);
+        badgePop.setFromY(0);
+        badgePop.setToX(1.0);
+        badgePop.setToY(1.0);
         badgePop.setInterpolator(Interpolator.EASE_OUT);
         badgePop.play();
     }

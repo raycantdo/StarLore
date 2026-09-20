@@ -614,9 +614,17 @@ public class ShootingStarController {
     // ─── Game over ──────────────────────────────────────────────
     private void triggerGameOver() {
         gameOver = true;
+
         if (gameTimer != null) gameTimer.stop();
         if (countdownTimer != null) countdownTimer.stop();
         if (gameMusicPlayer != null) gameMusicPlayer.stop();
+
+        // Convert the final arcade score into StarDust
+        if (currentPlayer != null && score > 0) {
+            int starDustReward = score / 10;
+            ScoreService.addStarDust(currentPlayer, starDustReward);
+        }
+
         showGameOver();
     }
 
