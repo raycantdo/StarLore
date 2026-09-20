@@ -11,8 +11,9 @@
 <?import javafx.scene.shape.Line?>
 <?import javafx.scene.text.Font?>
 
-<AnchorPane fx:id="rootPane" prefHeight="700.0" prefWidth="950.0"
-            style="-fx-background-color: #020308;"
+<AnchorPane fx:id="rootPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
+            prefHeight="700.0" prefWidth="950.0"
+            style="-fx-background-color: #050819;"
             xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="com.starlore.starlore.HelloController">
    <children>
@@ -22,7 +23,7 @@
 
       <VBox alignment="CENTER" spacing="16.0"
             AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
-            AnchorPane.topAnchor="0.0" AnchorPane.bottomAnchor="0.0">
+            AnchorPane.topAnchor="50.0">
          <children>
             <!-- Heavy Cinematic Typography with Gradients & Dark Shadows -->
             <Label text="StarLore"
