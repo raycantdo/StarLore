@@ -68,6 +68,7 @@ public class BattleController {
     @FXML private Label storySpeakerLabel;
     @FXML private Label storyTextLabel;
     @FXML private Button storyContinueButton;
+    @FXML private Button storySkipButton;
 
     private AnimationTimer galaxyTimer;
     private double galaxyTime = 0;
@@ -256,6 +257,11 @@ public class BattleController {
         bob.setCycleCount(2);
         bob.setAutoReverse(true);
         bob.play();
+    }
+    @FXML
+    void onStorySkip(ActionEvent event) {
+        if (typewriterTimeline != null) typewriterTimeline.stop();
+        beginFight();
     }
 
     @FXML
