@@ -3,24 +3,30 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.Tooltip?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
-<?import javafx.scene.text.Font?>
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.shape.Rectangle?>
 
 <AnchorPane fx:id="rootPane" prefHeight="700.0" prefWidth="950.0" style="-fx-background-color: #020308;" xmlns="http://javafx.com/javafx/26" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.starlore.starlore.BattleController">
     <children>
-        <ImageView fx:id="backgroundImageView" fitHeight="700.0" fitWidth="950.0" pickOnBounds="true" preserveRatio="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
+        <Canvas fx:id="galaxyCanvas" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0" />
 
         <StackPane fx:id="contentWrapper" pickOnBounds="false" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
             <children>
-                <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="700.0" prefWidth="950.0" pickOnBounds="false">
+                <AnchorPane fx:id="battleFieldPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="700.0" prefWidth="950.0" pickOnBounds="false">
                     <children>
                         <ImageView fx:id="medusaSprite" fitHeight="280.0" fitWidth="280.0" layoutX="650.0" layoutY="280.0" pickOnBounds="true" preserveRatio="true" />
                         <ImageView fx:id="perseusSprite" fitHeight="220.0" fitWidth="220.0" layoutX="100.0" layoutY="340.0" pickOnBounds="true" preserveRatio="true" />
+
+                        <!-- Weak point banner -->
+                        <Label fx:id="weakPointLabel" layoutX="700.0" layoutY="230.0" text="⚡ WEAK POINT!" visible="false" opacity="0"
+                               style="-fx-font-family: 'Verdana'; -fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #fde047; -fx-background-color: rgba(3, 8, 26, 0.85); -fx-background-radius: 12; -fx-border-color: #fde047; -fx-border-radius: 12; -fx-border-width: 1.5; -fx-padding: 4 12; -fx-effect: dropshadow(gaussian, #fde047, 14, 0.6, 0, 0);" />
 
                         <!-- Top RPG Health & Status Frames -->
                         <HBox layoutX="40.0" layoutY="25.0" prefWidth="870.0" alignment="CENTER">
@@ -31,9 +37,12 @@
                                             <children>
                                                 <Label text="⚡" style="-fx-font-size: 14px; -fx-text-fill: #38bdf8;" />
                                                 <Label style="-fx-font-family: 'Verdana'; -fx-font-size: 15px; -fx-font-weight: bold; -fx-text-fill: #ffffff; -fx-letter-spacing: 1.5; -fx-effect: dropshadow(gaussian, #38bdf8, 8, 0.5, 0, 0);" text="PERSEUS" />
+                                                <Region HBox.hgrow="ALWAYS" />
+                                                <Label fx:id="potionsLabel" text="🧪 x2" style="-fx-font-family: 'Verdana'; -fx-font-size: 12px; -fx-font-weight: bold; -fx-text-fill: #86efac;" />
                                             </children>
                                         </HBox>
                                         <ProgressBar fx:id="playerHealthBar" prefHeight="14.0" prefWidth="270.0" progress="1.0" style="-fx-accent: #38bdf8; -fx-control-inner-background: rgba(15, 23, 42, 0.9); -fx-border-color: rgba(56, 189, 248, 0.3); -fx-border-radius: 4; -fx-background-radius: 4;" />
+                                        <ProgressBar fx:id="ultimateBar" prefHeight="8.0" prefWidth="270.0" progress="0.0" style="-fx-accent: #fde047; -fx-control-inner-background: rgba(15, 23, 42, 0.9); -fx-border-color: rgba(253, 224, 71, 0.3); -fx-border-radius: 4; -fx-background-radius: 4;" />
                                     </children>
                                 </VBox>
 
@@ -53,27 +62,85 @@
                             </children>
                         </HBox>
 
-                        <!-- Dialogue / Combat Log Panel -->
-                        <Label fx:id="battleTextLabel" alignment="CENTER" layoutX="90.0" layoutY="535.0" prefHeight="44.0" prefWidth="770.0"
+                        <!-- Combat Log Panel -->
+                        <Label fx:id="battleTextLabel" alignment="CENTER" layoutX="90.0" layoutY="500.0" prefHeight="44.0" prefWidth="770.0"
                                style="-fx-font-family: 'Verdana'; -fx-font-size: 15px; -fx-font-weight: bold; -fx-background-color: rgba(3, 8, 26, 0.88); -fx-background-radius: 20; -fx-border-color: rgba(56, 189, 248, 0.4); -fx-border-radius: 20; -fx-border-width: 1.5; -fx-text-fill: #ffd65a; -fx-padding: 6 24; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.7), 18, 0, 0, 3);"
                                text="A wild Medusa appears!" />
 
-                        <!-- Action Menu with Glowing Celestial Orbs -->
-                        <HBox fx:id="actionMenu" alignment="CENTER" layoutX="275.0" layoutY="590.0" prefHeight="80.0" prefWidth="400.0" spacing="34.0">
+                        <!-- Professional labeled action bar (6 actions) -->
+                        <HBox fx:id="actionMenu" alignment="CENTER" layoutX="128.0" layoutY="558.0" prefHeight="90.0" prefWidth="694.0" spacing="14.0">
                             <children>
-                                <Button mnemonicParsing="false" onAction="#onSwordAttack" prefHeight="70.0" prefWidth="70.0"
-                                        style="-fx-font-size: 28px; -fx-background-color: linear-gradient(to bottom, #0284c7, #0369a1); -fx-background-radius: 35; -fx-border-color: #38bdf8; -fx-border-radius: 35; -fx-border-width: 2.2; -fx-text-fill: white; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, #38bdf8, 20, 0.6, 0, 0);"
-                                        text="⚔" textAlignment="CENTER" />
-                                <Button mnemonicParsing="false" onAction="#onShieldBlock" prefHeight="70.0" prefWidth="70.0"
-                                        style="-fx-font-size: 28px; -fx-background-color: linear-gradient(to bottom, #d97706, #b45309); -fx-background-radius: 35; -fx-border-color: #fde047; -fx-border-radius: 35; -fx-border-width: 2.2; -fx-text-fill: white; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, #f59e0b, 20, 0.6, 0, 0);"
-                                        text="🛡" textAlignment="CENTER" />
+                                <Button fx:id="attackButton" mnemonicParsing="false" onAction="#onSwordAttack" prefHeight="86.0" prefWidth="104.0" contentDisplay="TOP" wrapText="true"
+                                        style="-fx-font-size: 17px; -fx-background-color: linear-gradient(to bottom, #0284c7, #0369a1); -fx-background-radius: 14; -fx-border-color: #38bdf8; -fx-border-radius: 14; -fx-border-width: 2; -fx-text-fill: white; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, #38bdf8, 14, 0.5, 0, 0);"
+                                        text="⚔&#10;ATTACK" textAlignment="CENTER">
+                                    <tooltip>
+                                        <Tooltip text="Deal solid damage and charge your Ultimate meter. Has a chance to land a Critical Hit." />
+                                    </tooltip>
+                                </Button>
+                                <Button fx:id="defendButton" mnemonicParsing="false" onAction="#onShieldBlock" prefHeight="86.0" prefWidth="104.0" contentDisplay="TOP" wrapText="true"
+                                        style="-fx-font-size: 17px; -fx-background-color: linear-gradient(to bottom, #d97706, #b45309); -fx-background-radius: 14; -fx-border-color: #fde047; -fx-border-radius: 14; -fx-border-width: 2; -fx-text-fill: white; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, #f59e0b, 14, 0.5, 0, 0);"
+                                        text="🛡&#10;DEFEND" textAlignment="CENTER">
+                                    <tooltip>
+                                        <Tooltip text="Block incoming damage. Reflects Medusa's Petrifying Gaze back at her for bonus damage!" />
+                                    </tooltip>
+                                </Button>
+                                <Button fx:id="focusButton" mnemonicParsing="false" onAction="#onFocus" prefHeight="86.0" prefWidth="104.0" contentDisplay="TOP" wrapText="true"
+                                        style="-fx-font-size: 17px; -fx-background-color: linear-gradient(to bottom, #0891b2, #155e75); -fx-background-radius: 14; -fx-border-color: #67e8f9; -fx-border-radius: 14; -fx-border-width: 2; -fx-text-fill: white; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, #67e8f9, 14, 0.5, 0, 0);"
+                                        text="✺&#10;FOCUS" textAlignment="CENTER">
+                                    <tooltip>
+                                        <Tooltip text="Channel starlight to charge your Ultimate meter faster — but land no damage this turn." />
+                                    </tooltip>
+                                </Button>
+                                <Button fx:id="specialButton" disable="true" mnemonicParsing="false" onAction="#onSpecialAttack" prefHeight="86.0" prefWidth="104.0" contentDisplay="TOP" wrapText="true"
+                                        style="-fx-font-size: 17px; -fx-background-color: linear-gradient(to bottom, #a855f7, #6d28d9); -fx-background-radius: 14; -fx-border-color: #fde047; -fx-border-radius: 14; -fx-border-width: 2; -fx-text-fill: white; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, #a855f7, 14, 0.5, 0, 0);"
+                                        text="✦&#10;SPECIAL" textAlignment="CENTER">
+                                    <tooltip>
+                                        <Tooltip text="Unleash a devastating strike once your Ultimate meter is full. Higher Critical Hit chance." />
+                                    </tooltip>
+                                </Button>
+                                <Button fx:id="potionButton" mnemonicParsing="false" onAction="#onPotion" prefHeight="86.0" prefWidth="104.0" contentDisplay="TOP" wrapText="true"
+                                        style="-fx-font-size: 17px; -fx-background-color: linear-gradient(to bottom, #16a34a, #15803d); -fx-background-radius: 14; -fx-border-color: #86efac; -fx-border-radius: 14; -fx-border-width: 2; -fx-text-fill: white; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, #86efac, 14, 0.5, 0, 0);"
+                                        text="🧪&#10;POTION" textAlignment="CENTER">
+                                    <tooltip>
+                                        <Tooltip text="Restore 25% of Perseus's health. Limited to 2 uses per battle." />
+                                    </tooltip>
+                                </Button>
+                                <Button fx:id="fleeButton" mnemonicParsing="false" onAction="#onRun" prefHeight="86.0" prefWidth="104.0" contentDisplay="TOP" wrapText="true"
+                                        style="-fx-font-size: 17px; -fx-background-color: linear-gradient(to bottom, #475569, #334155); -fx-background-radius: 14; -fx-border-color: #94a3b8; -fx-border-radius: 14; -fx-border-width: 2; -fx-text-fill: white; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, #64748b, 14, 0.4, 0, 0);"
+                                        text="🏃&#10;FLEE" textAlignment="CENTER">
+                                    <tooltip>
+                                        <Tooltip text="Attempt to escape the battle. There's a chance it actually works this time..." />
+                                    </tooltip>
+                                </Button>
                             </children>
                         </HBox>
 
-                        <!-- Back to Hub Button -->
                         <Button fx:id="backButton" layoutX="365.0" layoutY="598.0" mnemonicParsing="false" onAction="#returnToHub" prefHeight="54.0" prefWidth="220.0"
                                 style="-fx-font-family: 'Verdana'; -fx-font-size: 14px; -fx-font-weight: bold; -fx-background-color: linear-gradient(to right, #0284c7, #7c3aed); -fx-text-fill: white; -fx-background-radius: 25; -fx-border-color: #38bdf8; -fx-border-radius: 25; -fx-border-width: 1.8; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, #38bdf8, 20, 0.5, 0, 0);"
                                 text="🏠 RETURN TO HUB" visible="false" />
+
+                        <!-- Full-battlefield flash overlay for crits / ultimate -->
+                        <Rectangle fx:id="flashOverlay" width="950.0" height="700.0" fill="WHITE" opacity="0.0" mouseTransparent="true" />
+
+                        <StackPane fx:id="storyOverlay" alignment="CENTER" pickOnBounds="true" style="-fx-background-color: rgba(0,0,0,0.35);" AnchorPane.topAnchor="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
+                            <children>
+                                <VBox fx:id="storyCard" alignment="CENTER" maxWidth="640.0" spacing="16.0"
+                                      style="-fx-background-color: rgba(6, 10, 22, 0.95); -fx-background-radius: 14; -fx-border-color: #e8c34a; -fx-border-radius: 14; -fx-border-width: 1.5; -fx-padding: 26 34; -fx-effect: dropshadow(gaussian, rgba(232,195,74,0.35), 22, 0.3, 0, 0);">
+                                    <children>
+                                        <Region prefHeight="1" maxWidth="Infinity" style="-fx-background-color: rgba(232,195,74,0.55);" />
+                                        <Label fx:id="storySpeakerLabel" alignment="CENTER" text="PERSEUS"
+                                               style="-fx-font-family: 'Verdana'; -fx-font-size: 14px; -fx-font-weight: bold; -fx-text-fill: #f0d060; -fx-letter-spacing: 4;" />
+                                        <Label fx:id="storyTextLabel" alignment="CENTER" textAlignment="CENTER" wrapText="true" maxWidth="560.0" text=""
+                                               style="-fx-font-family: 'Verdana'; -fx-font-size: 16px; -fx-text-fill: #f4f4f4;" />
+                                        <Button fx:id="storyContinueButton" onAction="#onStoryContinue" text="CONTINUE"
+                                                style="-fx-background-color: linear-gradient(to bottom, #f6d979, #d9ae2e); -fx-text-fill: #14110a; -fx-font-family: 'Verdana'; -fx-font-size: 13px; -fx-font-weight: bold; -fx-letter-spacing: 1.5; -fx-background-radius: 20; -fx-padding: 9 30; -fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(232,195,74,0.5), 12, 0.4, 0, 0);" />
+                                        <Button fx:id="storySkipButton" onAction="#onStorySkip" text="SKIP STORY"
+                                                style="-fx-background-color: transparent; -fx-text-fill: #94a3b8; -fx-font-family: 'Verdana'; -fx-font-size: 11px; -fx-font-weight: bold; -fx-letter-spacing: 1; -fx-underline: true; -fx-cursor: hand; -fx-padding: 4 10;" />
+                                        <Region prefHeight="1" maxWidth="Infinity" style="-fx-background-color: rgba(232,195,74,0.55);" />
+                                    </children>
+                                </VBox>
+                            </children>
+                        </StackPane>
                     </children>
                 </AnchorPane>
             </children>
